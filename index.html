@@ -213,6 +213,31 @@
     .hw-extra-row { border: 1px solid var(--border); border-radius: 9px; padding: 12px; margin-bottom: 8px; background: white; }
     .hw-extra-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 
+
+
+    /* Help guide */
+    .btn-help { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.55); border-radius: 7px; min-width: 40px; min-height: 34px; padding: 5px 8px; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+    .btn-help:active { background: rgba(255,255,255,0.14); }
+    .help-intro { font-size: 14px; color: var(--text-light); margin-bottom: 14px; }
+    .help-accordion { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow); }
+    .help-accordion-btn { width: 100%; display: flex; align-items: center; gap: 10px; padding: 15px 16px; background: white; color: var(--navy); border: 0; text-align: left; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .help-accordion-btn .help-arrow { margin-left: auto; color: var(--orange); font-size: 18px; transition: transform 0.18s; }
+    .help-accordion.open .help-arrow { transform: rotate(90deg); }
+    .help-accordion-panel { display: none; padding: 0 16px 16px; border-top: 1px solid var(--border); }
+    .help-accordion.open .help-accordion-panel { display: block; }
+    .help-accordion-panel h3 { color: var(--navy); font-size: 14px; margin: 14px 0 7px; }
+    .help-accordion-panel p, .help-accordion-panel li { font-size: 13px; line-height: 1.55; }
+    .help-accordion-panel ul, .help-accordion-panel ol { padding-left: 20px; }
+    .help-accordion-panel li { margin: 5px 0; }
+    .help-quick-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+    .help-quick-table th { background: #eef3f8; color: var(--navy); text-align: left; font-size: 11px; }
+    .help-quick-table th, .help-quick-table td { padding: 8px 6px; vertical-align: top; border-bottom: 1px solid var(--border); }
+    .help-quick-table tr:last-child td { border-bottom: 0; }
+    .help-rule { background: #fff3cd; border-left: 4px solid var(--orange); border-radius: 6px; padding: 10px; margin-top: 12px; font-size: 13px; }
+    .help-golden li { padding: 8px 0; border-bottom: 1px solid var(--border); list-style: none; }
+    .help-golden li:last-child { border-bottom: 0; }
+    @media (max-width: 420px) { .btn-help { min-width: 36px; padding: 5px 6px; } .help-quick-table th, .help-quick-table td { padding: 7px 4px; } }
+
     /* ── Catalogue Search Widget ── */
     .cat-search { position: relative; margin-top: 8px; }
     .cat-search select, .cat-search input[type="text"] { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; }
@@ -276,6 +301,7 @@ function defaultState() {
     currentDoor: {},
     completedDoors: [],
     stepError: null,
+    prevScreen: null,
   };
 }
 
@@ -1475,6 +1501,10 @@ function scheduleRerender(focusField, cursorPos) {
   }, 280);
 }
 
+function helpButton() {
+  return `<button class="btn-help" data-action="help" aria-label="Open Help Guide" title="Help Guide">❓</button>`;
+}
+
 function loggedInHeader() {
   return `<div class="header-user"><span class="header-user-name">${esc(loggedInUser.firstName)}</span><button class="btn-logout" data-action="logout">Logout</button></div>`;
 }
@@ -1506,6 +1536,7 @@ function render() {
   else if (S.screen==='home')    app.innerHTML = renderHome();
   else if (S.screen==='wizard')   app.innerHTML = renderWizard();
   else if (S.screen==='summary')  app.innerHTML = renderSummary();
+  else if (S.screen==='help')     app.innerHTML = renderHelp();
   attachListeners();
   updateLoginOnlyElements();
   saveSt();
@@ -1513,7 +1544,7 @@ function render() {
 
 function renderHome() {
   const {job, completedDoors} = S;
-  let h = `<div class="app-header"><h1>\uD83D\uDEAA 2nd Fix Quote Wizard <span style="font-size:12px;opacity:0.7">v3</span></h1>${completedDoors.length>0?`<span class="header-badge">${completedDoors.length} door${completedDoors.length>1?'s':''}</span>`:''}${loggedInHeader()}</div>`;
+  let h = `<div class="app-header"><h1>\uD83D\uDEAA 2nd Fix Quote Wizard <span style="font-size:12px;opacity:0.7">v3</span></h1>${completedDoors.length>0?`<span class="header-badge">${completedDoors.length} door${completedDoors.length>1?'s':''}</span>`:''}${helpButton()}${loggedInHeader()}</div>`;
   h += `<div class="screen screen-enter">`;
 
   if (completedDoors.length>0) {
@@ -1561,7 +1592,7 @@ function renderWizard() {
   let h = `<div class="app-header">
     <button class="btn-back" data-action="back">\u2190 Back</button>
     <h1>${dtInfo.emoji||'\uD83D\uDEAA'} ${(dtInfo.label||'').replace('\n',' ')}</h1>
-    ${loggedInHeader()}
+    ${helpButton()}${loggedInHeader()}
   </div>
   <div class="screen screen-enter">
     <div class="progress-wrap">
@@ -1579,6 +1610,39 @@ function renderWizard() {
   return h;
 }
 
+
+function renderHelp() {
+  const accordion = (id, icon, title, content, open=false) => `<section class="help-accordion${open?' open':''}" id="${id}">
+    <button class="help-accordion-btn" data-help-accordion="${id}" aria-expanded="${open?'true':'false'}"><span>${icon}</span><span>${title}</span><span class="help-arrow">›</span></button>
+    <div class="help-accordion-panel">${content}</div>
+  </section>`;
+  let h = `<div class="app-header"><button class="btn-back" data-action="help-back">← Back</button><h1>❓ Help Guide</h1>${loggedInHeader()}</div><div class="screen screen-enter">`;
+  h += `<div class="card"><h2>2nd Fix Quote Wizard</h2><p class="help-intro">A quick field guide for capturing a clear, review-ready quote. Tap a topic to expand it.</p>${banner('info','Need help with an unusual job? Do not guess — capture the details and ask for GM review.')}</div>`;
+  h += accordion('help-howto','📱','App How-To', `
+    <h3>Getting started</h3><ol><li>Log in, then enter the customer name, Simpro job # and address.</li><li>Tap the relevant door type tile and follow the wizard prompts.</li><li>Answer each step, add observations/photos, then generate the summary.</li></ol>
+    <h3>Multiple doors</h3><p>After finishing a door, use <strong>+ Add Another Door</strong> on the summary screen. Each door stays grouped under the same job.</p>
+    <h3>Copying to Simpro</h3><p><strong>Copy Notes</strong> copies the customer/job notes for the Simpro notes field. <strong>Copy Full</strong> copies the complete output, including sizing, flags and items.</p>
+    <h3>Starting fresh</h3><p><strong>Start New Job</strong> clears the current job and all captured doors. Check you have copied what you need first.</p>`, true);
+  h += accordion('help-first-questions','🗣️','First Questions & Door Types', `
+    <h3>Ask every customer</h3><ol><li>Is this for <strong>inside or outside</strong> the house?</li><li>Are they <strong>replacing an existing door</strong> or creating a new opening?</li><li>What <strong>style</strong> of door are they after?</li></ol>
+    <h3>9 door types</h3><table class="help-quick-table"><thead><tr><th>Type</th><th>Typical use</th></tr></thead><tbody>
+      <tr><td>🚪 External Hinged</td><td>Front entrance, rear, laundry or garage access</td></tr><tr><td>🏠 External Door & Frame</td><td>Full frame replacement with seals/architraves</td></tr><tr><td>🚪 Internal Hinged</td><td>Bedrooms, bathrooms, pantry, storage</td></tr><tr><td>🏠 Internal Door & Frame</td><td>New internal frame, door and architraves</td></tr><tr><td>🚪🚪 Double Doors</td><td>Wide openings and formal rooms</td></tr><tr><td>🐱 Cat & Kitten</td><td>Wide opening with one primary walkthrough leaf</td></tr><tr><td>➡️ Wall Face Slider</td><td>Limited swing space or narrow corridors</td></tr><tr><td>🌾 Barn Door</td><td>Feature internal spaces, pantry or study</td></tr><tr><td>〰️ Bi-fold / Multi-fold</td><td>Wide openings, wardrobes and transitions</td></tr>
+    </tbody></table>`);
+  h += accordion('help-measuring','📏','Measuring & Site Checks', `
+    <h3>Measuring golden rules</h3><ul><li><strong>Timber:</strong> use the widest measurement; trim back. Maximum trim is generally <strong>10mm total</strong> (Hume is 5mm).</li><li><strong>Aluminium:</strong> use the smallest measurement and allow a <strong>5mm margin per side</strong>. It cannot be trimmed.</li><li>Take <strong>6 width readings + 1 height + thickness</strong>. Record photos/notes.</li></ul>
+    <h3>Door stop / screen clearance</h3><p>Allow a minimum <strong>70mm stop width</strong> for a screen door. Lever handles project about <strong>55–65mm</strong>; also check handle operating arcs do not clash.</p>
+    <h3>Weather exposure</h3><p>For a door in full weather, recommend <strong>composite first</strong>. Timber has <strong>no warranty</strong> in a full-weather position. Record if composite was offered and declined.</p>
+    <h3>Photo checklist</h3><ul><li>Both sides of the door/opening</li><li>Existing handle/hardware</li><li>Door edge where the latch sits</li><li>Any frame damage, rot, movement or unusual site condition</li></ul>`);
+  h += accordion('help-hardware','🔐','Hardware Quick Reference', `
+    <table class="help-quick-table"><thead><tr><th>Type</th><th>Use</th></tr></thead><tbody><tr><td>1. Entrance set</td><td>Key outside, turn snib inside; standard doors under 1m.</td></tr><tr><td>2. Deadbolt + entrance</td><td>Keyed lever/knob plus separate deadlock.</td></tr><tr><td>3. Multifunction</td><td>Trilock/Knox-style all-in-one locking.</td></tr><tr><td>4. Pull bar + roller catch</td><td>Minimalist option, commonly for doors 1m+.</td></tr><tr><td>5. Mortice + pull bar</td><td>Best for large/heavy doors; built-in latch and deadbolt.</td></tr><tr><td>6. Mortice only</td><td>Mortice lock where a pull bar is not wanted.</td></tr><tr><td>7. Digital / smart lock</td><td>Keypad, fingerprint or app access; ask about key backup.</td></tr></tbody></table>
+    <div class="help-rule"><strong>Before quoting hardware:</strong> confirm exact finish and product with the customer. Keep one supplier per finish for the job.</div>`);
+  h += accordion('help-stop-rules','🛑','Stop Rules & Golden Rules', `
+    <h3>Stop and escalate</h3><ul><li><strong>Frame rot:</strong> quote/escalate to frame replacement — do not quote a door-only fix.</li><li><strong>Asbestos:</strong> stop work and escalate.</li><li><strong>Structural movement:</strong> stop and arrange review.</li><li>Also stop if sizing is unclear, trim exceeds limits, hardware finish is unconfirmed, or compliance/structural work is involved.</li></ul>
+    <h3>Golden rules</h3><ul class="help-golden"><li>Never send a quote without GM review.</li><li>Never show labour hours or rates to customers.</li><li>Always get photos before recommending hardware.</li><li>Always confirm the exact finish with the customer.</li><li>Use one supplier per finish per job.</li><li>Always mention the <strong>$55 consultation fee</strong> upfront — refundable against an accepted quote.</li></ul>`);
+  h += `<div class="card"><h3>💡 Reporting issues</h3><p class="sm">Found a bug or have a suggestion? Tell George and the Yoda bot will get it sorted.</p></div></div>`;
+  return h;
+}
+
 function renderSummary() {
   const {completedDoors, job} = S;
   const fullOut = genFullOutput();
@@ -1592,7 +1656,7 @@ function renderSummary() {
     <button class="btn-back" data-action="back-home">\u2190 Home</button>
     <h1>Quote Summary</h1>
     <span class="header-badge">${fmtDate()}</span>
-    ${loggedInHeader()}
+    ${helpButton()}${loggedInHeader()}
   </div>
   <div class="screen screen-enter">`;
 
@@ -1662,6 +1726,16 @@ function attachListeners() {
       login(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
     });
   }
+
+  // Help accordions
+  app.querySelectorAll('[data-help-accordion]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const section = document.getElementById(btn.dataset.helpAccordion);
+      if (!section) return;
+      const open = section.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  });
 
   // Job fields
   app.querySelectorAll('[data-job]').forEach(el => {
@@ -1784,6 +1858,14 @@ function rerenderStep() {
 function handleAction(action) {
   if (action==='logout') {
     logout();
+  } else if (action==='help') {
+    S.prevScreen = S.screen || 'home';
+    S.screen = 'help';
+    render();
+  } else if (action==='help-back') {
+    S.screen = S.prevScreen || 'home';
+    S.prevScreen = null;
+    render();
   } else if (action==='back') {
     if (S.currentStep>0) { S.currentStep--; S.stepError=null; render(); }
     else { S.screen='home'; S.currentDoor={}; S.stepError=null; render(); }
