@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>2nd Fix Quote Wizard v3</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #1B3A5C;
+      --orange: #F4821F;
+      --success: #27AE60;
+      --danger: #E74C3C;
+      --bg: #F5F6FA;
+      --white: #ffffff;
+      --border: #dde3ef;
+      --text: #1a2332;
+      --text-light: #6b7a99;
+      --radius: 12px;
+      --shadow: 0 2px 14px rgba(27,58,92,0.10);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 16px; line-height: 1.5; }
+    #app { max-width: 600px; margin: 0 auto; padding-bottom: 40px; }
+
+    /* Header */
+    .app-header { background: var(--navy); color: white; padding: 14px 16px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+    .app-header h1 { font-size: 17px; font-weight: 700; flex: 1; }
+    .header-badge { background: var(--orange); color: white; border-radius: 6px; padding: 2px 9px; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .btn-back { background: transparent; color: rgba(255,255,255,0.85); border: none; padding: 6px 0; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 4px; font-family: inherit; font-weight: 500; min-width: 44px; min-height: 44px; flex-shrink: 0; }
+    .btn-back:active { color: white; }
+
+
+    /* Login */
+    #app.login-active { max-width: none; min-height: 100vh; padding-bottom: 0; }
+    .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px 14px; }
+    .login-card { width: 100%; max-width: 420px; background: var(--white); border-radius: var(--radius); overflow: hidden; box-shadow: 0 8px 28px rgba(27,58,92,0.18); border: 1px solid var(--border); }
+    .login-brand { background: var(--navy); color: white; padding: 28px 24px 24px; text-align: center; }
+    .login-brand-mark { font-size: 34px; line-height: 1; margin-bottom: 10px; }
+    .login-brand h1 { font-size: 23px; font-weight: 800; line-height: 1.25; }
+    .login-brand p { font-size: 13px; color: rgba(255,255,255,0.72); margin-top: 6px; }
+    .login-form { padding: 24px; }
+    .login-error { background: #fdecea; border: 1px solid var(--danger); color: var(--danger); border-radius: 9px; padding: 10px 12px; margin-bottom: 14px; font-size: 13px; font-weight: 600; }
+    .header-user { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .header-user-name { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.84); white-space: nowrap; }
+    .btn-logout { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.55); border-radius: 6px; padding: 5px 8px; font-size: 11px; font-family: inherit; font-weight: 700; cursor: pointer; min-height: 30px; }
+    .btn-logout:active { background: rgba(255,255,255,0.14); }
+    @media (max-width: 420px) { .header-user-name { display: none; } .app-header { gap: 7px; } }
+
+    /* Screen */
+    .screen { padding: 14px 14px 0; }
+    .screen-enter { animation: slideIn 0.18s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* Card */
+    .card { background: var(--white); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    .card h2 { font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 16px; }
+    .card h3 { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 12px; }
+
+    /* Form */
+    .form-group { margin-bottom: 14px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-group label { display: block; font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    .form-group .hint { font-size: 12px; color: var(--text-light); margin-top: 5px; }
+    .form-group .err { font-size: 12px; color: var(--danger); margin-top: 5px; font-weight: 500; }
+    input[type=text], input[type=email], input[type=password], input[type=number], textarea, select { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 9px; font-size: 16px; font-family: inherit; color: var(--text); background: white; transition: border-color 0.2s; -webkit-appearance: none; appearance: none; }
+    input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, input[type=number]:focus, textarea:focus { outline: none; border-color: var(--navy); }
+    textarea { min-height: 80px; resize: vertical; }
+    .input-unit-wrap { position: relative; display: flex; align-items: center; }
+    .input-unit-wrap input { padding-right: 48px; }
+    .input-unit-wrap .unit { position: absolute; right: 13px; font-size: 13px; color: var(--text-light); font-weight: 500; pointer-events: none; }
+
+    /* Door Type Grid */
+    .door-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .door-btn { background: white; border: 2px solid var(--border); border-radius: var(--radius); padding: 14px 10px; text-align: center; cursor: pointer; transition: all 0.15s; min-height: 86px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; -webkit-tap-highlight-color: transparent; }
+    .door-btn:active { transform: scale(0.96); background: #eef3f8; }
+    .door-btn .icon { font-size: 26px; line-height: 1; }
+    .door-btn .lbl { font-size: 12px; font-weight: 600; color: var(--navy); line-height: 1.3; }
+
+    /* Options */
+    .opts { display: grid; gap: 8px; }
+    .opts.cols2 { grid-template-columns: repeat(2, 1fr); }
+    .opt-btn { background: white; border: 2px solid var(--border); border-radius: 10px; padding: 13px 14px; text-align: left; cursor: pointer; transition: all 0.15s; font-size: 15px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 10px; min-height: 50px; -webkit-tap-highlight-color: transparent; width: 100%; font-family: inherit; }
+    .opt-radio { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .opt-btn.sel { border-color: var(--navy); background: #eef3f8; }
+    .opt-btn.sel .opt-radio { border-color: var(--navy); background: var(--navy); }
+    .opt-btn.sel .opt-radio::after { content: ''; width: 8px; height: 8px; background: white; border-radius: 50%; display: block; }
+
+    /* Yes/No */
+    .yn { display: grid; gap: 9px; }
+    .yn.c2 { grid-template-columns: repeat(2, 1fr); }
+    .yn.c3 { grid-template-columns: repeat(3, 1fr); }
+    .yn-btn { padding: 14px 10px; border-radius: 10px; border: 2px solid var(--border); font-size: 15px; font-weight: 600; cursor: pointer; background: white; transition: all 0.15s; min-height: 50px; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+    .yn-btn.y.sel { background: #d4edda; border-color: var(--success); color: #155724; }
+    .yn-btn.n.sel { background: #fdecea; border-color: var(--danger); color: var(--danger); }
+    .yn-btn.t.sel { background: #fff3cd; border-color: #d4a017; color: #856404; }
+
+    /* Banners */
+    .banner { padding: 11px 14px; border-radius: 9px; margin-bottom: 10px; font-size: 14px; line-height: 1.5; }
+    .banner:last-child { margin-bottom: 0; }
+    .b-warn { background: #fff3cd; border: 1px solid #d4a017; color: #856404; }
+    .b-danger { background: #fdecea; border: 1px solid var(--danger); color: var(--danger); font-weight: 600; }
+    .b-success { background: #d4edda; border: 1px solid var(--success); color: #155724; }
+    .b-info { background: #e8f0fe; border: 1px solid #3a7bd5; color: #1a3a7c; }
+
+    /* Progress */
+    .progress-wrap { margin-bottom: 14px; }
+    .progress-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-light); margin-bottom: 6px; font-weight: 500; }
+    .progress-track { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--orange); border-radius: 4px; transition: width 0.3s; }
+
+    /* Step header */
+    .step-hdr { margin-bottom: 16px; }
+    .step-title { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 3px; line-height: 1.3; }
+    .step-sub { font-size: 14px; color: var(--text-light); }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 20px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; min-height: 50px; -webkit-tap-highlight-color: transparent; font-family: inherit; text-decoration: none; width: 100%; }
+    .btn-primary { background: var(--navy); color: white; }
+    .btn-primary:active { background: #122847; }
+    .btn-orange { background: var(--orange); color: white; }
+    .btn-orange:active { background: #d4700f; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-outline { background: transparent; color: var(--navy); border: 2px solid var(--navy); }
+    .btn-outline-red { background: transparent; color: var(--danger); border: 2px solid var(--danger); }
+    .btn-sm { padding: 10px 16px; font-size: 14px; min-height: 42px; }
+    .btn-auto { width: auto; }
+    .btn-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+    /* Inline calc */
+    .calc-box { background: var(--bg); border: 1px solid var(--border); border-radius: 9px; padding: 12px; margin-top: 10px; }
+    .calc-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 14px; }
+    .calc-row:not(:last-child) { border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 4px; }
+    .cv { font-weight: 700; }
+    .cs { color: var(--success); }
+    .cd { color: var(--danger); }
+    .co { color: var(--orange); }
+
+    /* Sizing card */
+    .size-card { background: var(--navy); color: white; border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+    .size-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+    .size-row:last-child { border-bottom: none; }
+    .sl { color: rgba(255,255,255,0.65); }
+    .sv { font-weight: 700; }
+
+    /* Checklist */
+    .checklist { list-style: none; }
+    .checklist li { padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .checklist li:last-child { border-bottom: none; }
+    input[type=checkbox] { width: 22px; height: 22px; cursor: pointer; flex-shrink: 0; accent-color: var(--navy); }
+
+    /* Summary output */
+    .out-box { background: #1a2332; color: #e4e9f5; border-radius: 10px; padding: 14px; font-family: 'Courier New', monospace; font-size: 12.5px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; max-height: 380px; overflow-y: auto; }
+
+    /* Job summary header */
+    .job-hdr-card { background: var(--navy); color: white; border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+    .job-hdr-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+    .job-hdr-row { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.12); }
+    .job-hdr-row:last-child { border-bottom: none; }
+    .jl { color: rgba(255,255,255,0.65); }
+    .jv { font-weight: 600; }
+
+    /* Utilities */
+    .mt8 { margin-top: 8px; }
+    .mt12 { margin-top: 12px; }
+    .mt14 { margin-top: 14px; }
+    .mb8 { margin-bottom: 8px; }
+    .mb12 { margin-bottom: 12px; }
+    .mb14 { margin-bottom: 14px; }
+    .fw6 { font-weight: 600; }
+    .fw7 { font-weight: 700; }
+    .tc { text-align: center; }
+    .sm { font-size: 13px; }
+    .muted { color: var(--text-light); }
+    .c-navy { color: var(--navy); }
+    .copy-feedback { text-align: center; font-size: 13px; color: var(--success); min-height: 22px; margin-top: 8px; font-weight: 600; }
+
+    /* Door tab strip */
+    .door-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 12px; scrollbar-width: none; }
+    .door-tabs::-webkit-scrollbar { display: none; }
+    .door-tab { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; background: white; border: 2px solid var(--border); font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-light); font-family: inherit; }
+    .door-tab.active { background: var(--navy); border-color: var(--navy); color: white; }
+
+    /* Photo slots */
+    .photo-slot { margin-bottom: 14px; }
+    .photo-slot-label { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    .btn-photo { display: inline-flex; align-items: center; gap: 7px; padding: 11px 18px; background: var(--orange); color: white; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; min-height: 46px; -webkit-tap-highlight-color: transparent; border: none; width: 100%; justify-content: center; }
+    .photo-thumb { width: 100%; max-height: 140px; object-fit: cover; border-radius: 9px; margin-top: 9px; border: 2px solid var(--border); display: block; }
+
+    /* Size picker removed - now uses plain inputs */
+    .warranty-box { background: #fff3cd; border: 2px solid #e6a817; border-radius: 10px; padding: 16px; margin-top: 12px; }
+    .warranty-box h4 { color: #b35a00; margin: 0 0 10px; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+    .warranty-box p { color: #7a4000; font-size: 13px; margin: 0 0 12px; line-height: 1.5; }
+    .warranty-check { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; cursor: pointer; }
+    .warranty-check input[type=checkbox] { width: 22px; height: 22px; min-width: 22px; margin-top: 2px; accent-color: #e6a817; cursor: pointer; }
+    .warranty-check span { font-size: 14px; color: #333; line-height: 1.4; font-weight: 500; }
+    .warranty-sig { margin-top: 8px; }
+    .warranty-sig label { font-size: 13px; color: #7a4000; font-weight: 600; display: block; margin-bottom: 6px; }
+    .warranty-sig input { width: 100%; padding: 10px 12px; border: 2px solid #e6a817; border-radius: 8px; font-size: 15px; font-family: inherit; box-sizing: border-box; background: white; }
+
+    /* Improvements button + modal */
+    #improveBtn { position: fixed; bottom: 20px; right: 16px; background: var(--orange); color: white; border: none; border-radius: 24px; padding: 12px 18px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.28); z-index: 998; font-family: inherit; letter-spacing: 0.01em; }
+    #improveBtn:active { background: #d4700f; transform: scale(0.97); }
+    #improveOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
+    #improveModal { background: white; border-radius: var(--radius); padding: 22px; width: 100%; max-width: 500px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    #improveModal h3 { color: var(--navy); margin-bottom: 8px; font-size: 17px; }
+    #improveModal .sub { font-size: 13px; color: var(--text-light); margin-bottom: 14px; line-height: 1.5; }
+    #improveFeedback { width: 100%; min-height: 110px; padding: 12px 14px; border: 2px solid var(--border); border-radius: 9px; font-size: 15px; font-family: inherit; resize: vertical; box-sizing: border-box; }
+    #improveFeedback:focus { outline: none; border-color: var(--navy); }
+    #app { padding-bottom: 80px; }
+    .hw-section { background: #f9fafc; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-top: 12px; }
+    .hw-section h3 { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+    .hw-extra-row { border: 1px solid var(--border); border-radius: 9px; padding: 12px; margin-bottom: 8px; background: white; }
+    .hw-extra-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+
+    /* ── Catalogue Search Widget ── */
+    .cat-search { position: relative; margin-top: 8px; }
+    .cat-search select, .cat-search input[type="text"] { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; }
+    .cat-results {
+      position: absolute; z-index: 200; left: 0; right: 0; top: 100%;
+      background: #fff; border: 1px solid var(--border); border-radius: 10px;
+      max-height: 260px; overflow-y: auto; display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    }
+    .cat-results.show { display: block; }
+    .cat-ri { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .cat-ri:last-child { border-bottom: none; }
+    .cat-ri:hover, .cat-ri:focus { background: #eff6ff; }
+    .cat-ri-left { flex: 1; min-width: 0; }
+    .cat-ri-code { font-weight: 700; color: var(--navy); font-size: 14px; }
+    .cat-ri-name { color: var(--text-light); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+    .cat-ri-price { font-weight: 700; color: #059669; font-size: 14px; white-space: nowrap; }
+    .cat-selected-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; padding: 10px 14px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .cat-sel-info { font-size: 14px; }
+    .cat-sel-code { font-weight: 700; color: var(--navy); }
+    .cat-sel-price { font-weight: 700; color: #059669; margin-left: 12px; }
+    .cat-sel-clear { color: #ef4444; cursor: pointer; font-size: 12px; font-weight: 600; margin-left: 12px; }
+    .cat-loading { padding: 14px; text-align: center; color: var(--text-light); font-size: 13px; }
+    .cat-empty { padding: 14px; text-align: center; color: #9ca3af; font-size: 13px; }
+    .cat-group-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .cat-group-pill { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); background: #f9fafb; cursor: pointer; transition: all 0.15s; }
+    .cat-group-pill:hover, .cat-group-pill.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ====================== CONSTANTS ======================
+const SUPPLIER_TRIM = {
+  'Doors Depot': 10, 'Four Seasons': 10, 'Hume Doors': 5, 'Hume': 5,
+  'Parkwood Composite': 10, 'Corinthian': 10, 'Not Yet Decided': 10, 'Other': 10
+};
+
+const DOOR_TYPES = [
+  { id:'ext-door-only',  emoji:'\uD83D\uDEAA',   label:'External Door\n(Door Only)',  wiz:'extDoorOnly'  },
+  { id:'ext-door-frame', emoji:'\uD83C\uDFE0',   label:'External Door\n& Frame',      wiz:'extDoorFrame' },
+  { id:'int-door-only',  emoji:'\uD83D\uDEAA',   label:'Internal Door\n(Door Only)',  wiz:'intDoorOnly'  },
+  { id:'int-door-frame', emoji:'\uD83C\uDFE0',   label:'Internal Door\n& Frame',      wiz:'intDoorFrame' },
+  { id:'double-doors',   emoji:'\uD83D\uDEAA\uD83D\uDEAA', label:'Double Doors',     wiz:'doubleDoors'  },
+  { id:'cat-kitten',     emoji:'\uD83D\uDC31',   label:'Cat & Kitten Door',           wiz:'catKitten'    },
+  { id:'wall-slider',    emoji:'\u27A1\uFE0F',   label:'Wall Face Slider',            wiz:'wallSlider'   },
+  { id:'barn-door',      emoji:'\uD83C\uDF3E',   label:'Barn Door',                   wiz:'barnDoor'     },
+  { id:'bifold',         emoji:'\u3030\uFE0F',   label:'Bifold / Multifold',          wiz:'bifold'       },
+];
+
+// ====================== SESSION PHOTO STORE ======================
+const PHOTOS = {};
+
+// ====================== STATE ======================
+function defaultState() {
+  return {
+    screen: 'home',
+    job: { customerName:'', jobNumber:'', address:'', podiumNotes:'' },
+    currentTypeId: null,
+    currentStep: 0,
+    currentDoor: {},
+    completedDoors: [],
+    stepError: null,
+  };
+}
+
+let S = loadSt() || defaultState();
+
+
+// ====================== LOGIN ======================
+// Internal-tool login only: credentials are intentionally checked client-side.
+const STAFF_ACCOUNTS = [
+  { name: 'Cherie Lanzon', firstName: 'Cherie', email: 'sales@2ndfix.com.au', password: '2ndFix2025!', isAdmin: false },
+  { name: 'Andrew Lewis', firstName: 'Andrew', email: 'accounts@2ndfix.com.au', password: '2ndFix2025!', isAdmin: false },
+  { name: 'Princess Lei', firstName: 'Princess', email: 'admin@2ndfix.com.au', password: '2ndFix2025!', isAdmin: false },
+  { name: 'George Kalliontzis', firstName: 'George', email: 'george@2ndfix.com.au', password: '2ndFixBoss!', isAdmin: true }
+];
+
+function loadLoggedInUser() {
+  try {
+    const user = JSON.parse(localStorage.getItem('qwiz_user'));
+    const account = user && STAFF_ACCOUNTS.find(a => a.email === user.email);
+    return account ? { name: account.name, firstName: account.firstName, email: account.email, isAdmin: account.isAdmin } : null;
+  } catch(e) { return null; }
+}
+
+let loggedInUser = loadLoggedInUser();
+let loginError = '';
+
+function login(email, password) {
+  const account = STAFF_ACCOUNTS.find(a => a.email.toLowerCase() === String(email).trim().toLowerCase() && a.password === password);
+  if (!account) { loginError = 'Incorrect email or password. Please try again.'; render(); return; }
+  loggedInUser = { name: account.name, firstName: account.firstName, email: account.email, isAdmin: account.isAdmin };
+  try { localStorage.setItem('qwiz_user', JSON.stringify(loggedInUser)); } catch(e) {}
+  loginError = '';
+  S.screen = 'home';
+  saveSt();
+  render();
+}
+
+function logout() {
+  try { localStorage.removeItem('qwiz_user'); } catch(e) {}
+  loggedInUser = null;
+  loginError = '';
+  render();
+}
+
+function saveSt() {
+  try { localStorage.setItem('qwiz2', JSON.stringify(S)); } catch(e){}
+}
+function loadSt() {
+  try { const d = localStorage.getItem('qwiz2'); return d ? JSON.parse(d) : null; } catch(e){ return null; }
+}
+function clearSt() {
+  try { localStorage.removeItem('qwiz2'); } catch(e){}
+}
+
+// ====================== HELPERS ======================
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function ea(s)  { return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function fmtDate() {
+  const d=new Date(); const dd=String(d.getDate()).padStart(2,'0'); const mm=String(d.getMonth()+1).padStart(2,'0'); return `${dd}/${mm}/${d.getFullYear()}`;
+}
+
+function getDTInfo(id) { return DOOR_TYPES.find(d=>d.id===id)||{}; }
+function getDTLabel(id) { return (getDTInfo(id).label||id).replace('\n',' '); }
+function getWizKey(typeId) { return (getDTInfo(typeId)||{}).wiz; }
+
+function num(v) { const n=parseInt(v); return isNaN(n)?null:n; }
+
+function banner(type, msg) { return `<div class="banner b-${type}">${msg}</div>`; }
+
+function opts(options, field, selected, cols=1) {
+  const cls = cols===2 ? 'opts cols2' : 'opts';
+  return `<div class="${cls}">` + options.map(o => {
+    const val = typeof o==='string' ? o : o.value;
+    const lbl = typeof o==='string' ? o : o.label;
+    const sel = selected===val;
+    return `<button class="opt-btn${sel?' sel':''}" data-field="${ea(field)}" data-val="${ea(val)}"><div class="opt-radio"></div><span>${lbl}</span></button>`;
+  }).join('') + '</div>';
+}
+
+function yn(field, selected, options=['Yes','No'], classes=['y','n','t']) {
+  const n = options.length;
+  const gc = n>=3 ? 'c3' : 'c2';
+  return `<div class="yn ${gc}">` + options.map((o,i) => {
+    const cls = classes[i]||'t';
+    const sel = selected===o;
+    return `<button class="yn-btn ${cls}${sel?' sel':''}" data-field="${ea(field)}" data-val="${ea(o)}">${o}</button>`;
+  }).join('') + '</div>';
+}
+
+function numInput(field, val, hint='', ph='') {
+  return `<div class="input-unit-wrap"><input type="number" data-field="${ea(field)}" value="${ea(val)}" placeholder="${ph}" inputmode="numeric" pattern="[0-9]*"><span class="unit">mm</span></div>${hint?`<div class="hint">${hint}</div>`:''}`; 
+}
+
+function trimFlags(wTrim, hTrim, supplier) {
+  const max = SUPPLIER_TRIM[supplier]||10;
+  const flags = [];
+  if (wTrim!==null) {
+    if (wTrim>max) flags.push({t:'danger', m:`\uD83D\uDED1 STOP \u2014 Width trim (${wTrim}mm) exceeds ${supplier||'supplier'} maximum (${max}mm). Manual review required.`});
+    else if (wTrim>=0) flags.push({t:'success', m:`\u2705 Width trim: ${wTrim}mm \u2014 within tolerance (max ${max}mm)`});
+    else flags.push({t:'warn', m:`\u26A0\uFE0F New door width is ${Math.abs(wTrim)}mm wider than existing \u2014 verify this is correct`});
+  }
+  if (hTrim!==null) {
+    if (hTrim>max) flags.push({t:'danger', m:`\uD83D\uDED1 STOP \u2014 Height trim (${hTrim}mm) exceeds ${supplier||'supplier'} maximum (${max}mm). Manual review required.`});
+    else if (hTrim>=0) flags.push({t:'success', m:`\u2705 Height trim: ${hTrim}mm \u2014 within tolerance (max ${max}mm)`});
+  }
+  return flags;
+}
+
+// ══════════════════════════════════════════════════
+// CATALOGUE SEARCH WIDGET — Live Simpro Lookup
+// ══════════════════════════════════════════════════
+const CAT_API = '/.netlify/functions/catalogue-search';
+const PREBUILD_API = '/.netlify/functions/prebuilds-search';
+let _catGroups = null;
+let _catCache = {};
+let _catDebounce = {};
+
+// Load supplier groups from API (cached)
+async function catLoadGroups() {
+  if (_catGroups) return _catGroups;
+  try {
+    const r = await fetch(CAT_API + '?listGroups=true');
+    const d = await r.json();
+    _catGroups = d.groups || [];
+  } catch(e) { _catGroups = []; }
+  return _catGroups;
+}
+
+// Populate group dropdowns once DOM is ready
+function catInitDropdowns() {
+  catLoadGroups().then(groups => {
+    document.querySelectorAll('.cat-group-dd').forEach(sel => {
+      const cur = sel.getAttribute('data-cur') || '';
+      const filterAttr = sel.getAttribute('data-filter') || '';
+      const filters = filterAttr ? filterAttr.split(',').map(s=>s.trim().toLowerCase()) : [];
+      let optHtml = '<option value="">— Select supplier —</option>';
+      groups.forEach(g => {
+        if (filters.length && !filters.includes(g.key)) return;
+        const selected = g.key === cur ? ' selected' : '';
+        optHtml += '<option value="' + g.key + '"' + selected + '>' + g.label + '</option>';
+      });
+      sel.innerHTML = optHtml;
+    });
+  });
+}
+
+// Render the catalogue search widget
+// wid = unique widget id, d = door data object
+// opts: { codeField, nameField, priceField, groupField, defaultGroup, filterGroups, groupLabel, searchLabel, placeholder, hideGroup }
+function catWidget(wid, d, opts) {
+  opts = opts || {};
+  const cf = opts.codeField || (wid+'Code');
+  const nf = opts.nameField || (wid+'Name');
+  const pf = opts.priceField || (wid+'Price');
+  const gf = opts.groupField || (wid+'Group');
+  const selCode = d[cf] || '';
+  const selName = d[nf] || '';
+  const selPrice = d[pf] || '';
+  const curGroup = d[gf] || opts.defaultGroup || '';
+  const filterAttr = opts.filterGroups ? ' data-filter="' + ea(opts.filterGroups.join(',')) + '"' : '';
+
+  let h = '<div class="cat-search" id="catW_'+wid+'" data-cf="'+cf+'" data-nf="'+nf+'" data-pf="'+pf+'">';
+
+  // Supplier group dropdown
+  if (!opts.hideGroup) {
+    h += '<div class="form-group"><label>' + (opts.groupLabel||'Supplier') + '</label>';
+    h += '<select class="cat-group-dd" data-cur="'+ea(curGroup)+'"'+filterAttr+' onchange="catGroupPick(\''+wid+'\',\''+gf+'\',this.value)">';
+    h += '<option value="">Loading suppliers...</option></select></div>';
+  }
+
+  // Search input with results dropdown
+  const disabled = (!curGroup && !opts.hideGroup) ? ' disabled placeholder="Select a supplier first"' : '';
+  h += '<div class="form-group" style="position:relative"><label>' + (opts.searchLabel||'Search') + '</label>';
+  h += '<input type="text" id="catI_'+wid+'" class="cat-si" autocomplete="off" ' +
+       'placeholder="' + ea(opts.placeholder||'Type part no. or name (min 2 chars)…') + '"' +
+       disabled + ' oninput="catTyping(\''+wid+'\',\''+gf+'\',this.value)">';
+  h += '<div class="cat-results" id="catR_'+wid+'"></div></div>';
+
+  // Selected item display
+  if (selCode) {
+    h += '<div class="cat-selected-box"><div class="cat-sel-info">';
+    h += '<span class="cat-sel-code">'+esc(selCode)+'</span> — '+esc(selName);
+    h += '<span class="cat-sel-price">$'+Number(selPrice||0).toFixed(2)+'</span>';
+    h += '</div><span class="cat-sel-clear" onclick="catClear(\''+wid+'\',\''+cf+'\',\''+nf+'\',\''+pf+'\')">✕ Clear</span></div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+// Group dropdown changed
+function catGroupPick(wid, gf, val) {
+  S.currentDoor[gf] = val;
+  const inp = document.getElementById('catI_'+wid);
+  if (inp) { inp.disabled = !val; inp.value = ''; inp.placeholder = val ? 'Type part no. or name…' : 'Select a supplier first'; }
+  const res = document.getElementById('catR_'+wid);
+  if (res) { res.innerHTML = ''; res.classList.remove('show'); }
+}
+
+// Debounced typing handler
+function catTyping(wid, gf, val) {
+  clearTimeout(_catDebounce[wid]);
+  const res = document.getElementById('catR_'+wid);
+  if (val.length < 2) { res.innerHTML=''; res.classList.remove('show'); return; }
+  res.innerHTML = '<div class="cat-loading">Searching…</div>';
+  res.classList.add('show');
+  _catDebounce[wid] = setTimeout(() => catFetch(wid, gf, val), 350);
+}
+
+// Fetch results
+async function catFetch(wid, gf, q) {
+  const group = S.currentDoor[gf] || '';
+  const cacheKey = group + '||' + q.toLowerCase();
+  const res = document.getElementById('catR_'+wid);
+
+  if (_catCache[cacheKey]) { catShowResults(wid, _catCache[cacheKey], q); return; }
+
+  try {
+    let url = CAT_API + '?q=' + encodeURIComponent(q);
+    if (group) url += '&group=' + encodeURIComponent(group);
+    const r = await fetch(url);
+    const data = await r.json();
+    _catCache[cacheKey] = data.items || [];
+    catShowResults(wid, _catCache[cacheKey], q);
+  } catch(e) {
+    res.innerHTML = '<div class="cat-empty">Search failed — check connection</div>';
+  }
+}
+
+// Display results dropdown
+function catShowResults(wid, items, q) {
+  const res = document.getElementById('catR_'+wid);
+  if (!items.length) { res.innerHTML = '<div class="cat-empty">No matches for "'+esc(q)+'"</div>'; res.classList.add('show'); return; }
+  let h = '';
+  items.slice(0, 50).forEach((it, i) => {
+    h += '<div class="cat-ri" onclick="catPick(\''+wid+'\','+i+')" data-idx="'+i+'">';
+    h += '<div class="cat-ri-left"><span class="cat-ri-code">'+esc(it.partNo||'—')+'</span>';
+    h += '<span class="cat-ri-name">'+esc(it.name||'')+'</span></div>';
+    h += '<span class="cat-ri-price">$'+Number(it.tradePriceEx||0).toFixed(2)+'</span>';
+    h += '</div>';
+  });
+  if (items.length > 50) h += '<div class="cat-empty">'+(items.length-50)+' more results — refine your search</div>';
+  res.innerHTML = h;
+  res.classList.add('show');
+  // Store items for pick
+  res._items = items;
+}
+
+// User picks a result
+function catPick(wid, idx) {
+  const res = document.getElementById('catR_'+wid);
+  const it = res._items[idx];
+  if (!it) return;
+  const d = S.currentDoor;
+  // Read custom field names from data attributes, fallback to wid+suffix
+  const container = document.getElementById('catW_'+wid);
+  const cf = (container && container.dataset.cf) || (wid+'Code');
+  const nf = (container && container.dataset.nf) || (wid+'Name');
+  const pf = (container && container.dataset.pf) || (wid+'Price');
+  d[cf] = it.partNo || '';
+  d[nf] = it.name || '';
+  d[pf] = it.tradePriceEx || 0;
+  res.classList.remove('show');
+  rerenderStep();
+  setTimeout(catInitDropdowns, 50);
+}
+
+// Clear selected item
+function catClear(wid, cf, nf, pf) {
+  const d = S.currentDoor;
+  d[cf] = ''; d[nf] = ''; d[pf] = '';
+  rerenderStep();
+  setTimeout(catInitDropdowns, 50);
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.cat-search')) {
+    document.querySelectorAll('.cat-results.show').forEach(el => el.classList.remove('show'));
+  }
+});
+
+// Auto-init dropdowns after each render
+const _origRerender = typeof rerenderStep === 'function' ? rerenderStep : null;
+
+
+
+function warrantyAck(d, context) {
+  const ackKey = 'trimWarrantyAck_' + context;
+  const nameKey = 'trimWarrantyName_' + context;
+  const sigKey = 'trimWarrantySig_' + context;
+  const checked = d[ackKey] ? 'checked' : '';
+  const name = d[nameKey] || '';
+  const hasSig = !!d[sigKey];
+  return `<div class="warranty-box">
+    <h4>⚠️ WARRANTY VOID — Customer Must Be Informed</h4>
+    <p>The trim required exceeds the supplier maximum. Proceeding with this door will <strong>void the manufacturer warranty</strong>. You must inform the customer before continuing.</p>
+    <label class="warranty-check">
+      <input type="checkbox" data-field="${ackKey}" ${checked} onchange="S.currentDoor['${ackKey}']=this.checked; rerenderStep();">
+      <span>I have verbally informed the customer that this trim exceeds the supplier maximum and will void the door warranty. The customer accepts this.</span>
+    </label>
+    ${checked ? `<div class="warranty-sig">
+      <label>Customer Name (acknowledgment):</label>
+      <input type="text" data-field="${nameKey}" value="${name}" placeholder="Customer full name..." style="border-color:${name?'#28a745':'#e6a817'}">
+      <div class="sig-pad-wrap">
+        <label>Customer Signature:</label>
+        <canvas id="sigCanvas_${context}" class="sig-canvas${hasSig?' signed':''}" height="160"></canvas>
+        <div class="sig-actions">
+          <button type="button" class="sig-clear" onclick="clearSig('${context}')">✕ Clear</button>
+          <span class="sig-status" id="sigStatus_${context}">${hasSig ? '✅ Signature captured' : 'Ask customer to sign above with their finger'}</span>
+        </div>
+      </div>
+    </div>` : ''}
+  </div>`;
+}
+
+function sealRec(existingH, newH) {
+  const room = (num(existingH)||0) - (num(newH)||0);
+  if (room>=27) return {type:'RP4 Drop Seal', reason:`${room}mm height room \u2014 suitable for RP4 Drop Seal (needs 27mm off door height)`};
+  return {type:'RP3 Flat Seal', reason:`${room}mm height room \u2014 tight clearance, recommend RP3 Flat Seal (no trim needed)`};
+}
+
+// --- Photo slot helper ---
+function photoSlot(slotId, label, doorData) {
+  if (!doorData.photosTaken) doorData.photosTaken = {};
+  const taken = doorData.photosTaken[slotId];
+  const photoEntry = PHOTOS[slotId];
+  const photoUrl = photoEntry ? photoEntry.url : null;
+  const btnLabel = taken ? '\uD83D\uDCF7 Change Photo' : '\uD83D\uDCF7 Add Photo';
+  let h = `<div class="photo-slot">`;
+  h += `<div class="photo-slot-label">${label}</div>`;
+  h += `<label class="btn-photo" for="ph_${slotId}">${btnLabel}</label>`;
+  h += `<input type="file" accept="image/*" class="photo-input" id="ph_${slotId}" data-slot="${slotId}" style="display:none">`;
+  if (photoUrl) {
+    h += `<img src="${photoUrl}" class="photo-thumb" alt="${esc(label)}">`;
+  } else if (taken) {
+    h += `<div class="hint" style="margin-top:6px">\uD83D\uDCF7 ${esc(taken)} (captured this session)</div>`;
+  }
+  h += `</div>`;
+  return h;
+}
+
+// --- Extra hardware rows helper ---
+function renderExtraHardware(d) {
+  const items = d.extraHardware || [];
+  if (!items.length) return '<p class="sm muted" style="padding:4px 0">No additional hardware added yet.</p>';
+  return items.map((item, i) => `
+    <div class="hw-extra-row">
+      <div class="hw-extra-hdr">
+        <span class="fw6 sm c-navy">Item ${i+1}</span>
+        <button class="btn btn-outline-red btn-sm btn-auto" style="padding:5px 12px;min-height:34px;font-size:12px" data-action="remove-hw-${i}">✕ Remove</button>
+      </div>
+      ${catWidget('xHw'+i, d, {
+        codeField:'extraHw_'+i+'_model', nameField:'extraHw_'+i+'_name', priceField:'extraHw_'+i+'_price',
+        groupField:'extraHw_'+i+'_group', searchLabel:'Search Product',
+        placeholder:'Type part no. or product name…',
+        groupLabel:'Supplier'
+      })}
+      <div class="form-group" style="margin-bottom:0">
+        <label style="font-size:12px;color:var(--text-light)">Qty</label>
+        ${opts(['1','2','3','4'], 'extraHw_'+i+'_qty', String(item.qty||'1'), 4)}
+      </div>
+    </div>
+  `).join('');
+}
+
+// --- Smart size picker helper --- now just a plain input
+function sizePicker(field, sizes, selected, cols, customMode, doorData) {
+  return numInput(field, doorData[field] || '', 'Enter size in mm');
+}
+
+// --- Suggested door width from opening ---
+function suggestDoorWidth(openingW) {
+  const frameW = num(openingW) - 20;
+  const doorMaxW = frameW - 20;
+  const standards = [1010, 920, 870, 820, 770, 720, 620];
+  return standards.find(w => w <= doorMaxW) || null;
+}
+
+// ====================== WIZARD STEPS ======================
+
+// --- External Door Only ---
+const extDoorOnlySteps = [
+  {
+    id:'location', title:'Door Location', sub:'Where is the door located?',
+    render(d) { return opts(['Front Entry','Rear','Laundry/External','Garage Access'], 'location', d.location); },
+    validate(d) { return d.location?null:'Please select a location'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'weather', title:'Weather Exposure', sub:'Is the door in full weather (no eave/overhang)?',
+    render(d) {
+      let h = opts(['Full Weather (exposed)','Sheltered (under eave/verandah)'], 'weatherExposure', d.weatherExposure);
+      if (d.weatherExposure==='Full Weather (exposed)') h += banner('warn','\u26A0\uFE0F Full weather position \u2014 consider recommending Parkwood Composite or Duramax door for 10-year warranty. Timber doors require undercover position to maintain warranty.');
+      return h;
+    },
+    validate(d) { return d.weatherExposure?null:'Please select weather exposure'; },
+    flags(d) {
+      if (d.weatherExposure==='Full Weather (exposed)') return [{t:'warn',m:'\u26A0\uFE0F Full weather external door \u2014 timber warranty at risk. Consider Parkwood Composite or Duramax.'}];
+      return [];
+    }
+  },
+  {
+    id:'screen', title:'Screen Door', sub:'Is there an existing screen door the customer wants to keep?',
+    render(d) {
+      let h = yn('hasScreen', d.hasScreen);
+      if (d.hasScreen==='Yes') {
+        h += `<div class="mt12">
+          <div class="form-group"><label>Existing doorstop width</label>${numInput('stopWidth',d.stopWidth,'Standard is 70mm','70')}</div>
+          <div class="form-group"><label>Is the stop fixed/moulded into frame?</label>${yn('stopFixed',d.stopFixed)}</div>
+        </div>`;
+        if (d.stopWidth && num(d.stopWidth)<70) h += banner('warn','\u26A0\uFE0F Narrow doorstop \u2014 check handle clearance with screen door. May need larger stops, subframe, or screen door refit.');
+        if (d.stopFixed==='Yes') h += banner('warn','\u26A0\uFE0F Fixed stops \u2014 cannot remove. Check if new handle will clear screen door. May need screen door refit or subframe build-out.');
+        h += `<div class="mt12">` + photoSlot('photo_screen_stop', 'Photo: Door Stop Width', d) + `</div>`;
+      }
+      return h;
+    },
+    validate(d) { return d.hasScreen?null:'Please answer yes or no'; },
+    flags(d) {
+      const f=[];
+      if (d.hasScreen==='Yes' && d.stopWidth && num(d.stopWidth)<70) f.push({t:'warn',m:'\u26A0\uFE0F Narrow doorstop \u2014 handle clearance risk with screen door.'});
+      if (d.hasScreen==='Yes' && d.stopFixed==='Yes') f.push({t:'warn',m:'\u26A0\uFE0F Fixed stops \u2014 screen door clearance check required.'});
+      return f;
+    }
+  },
+  {
+    id:'existingSize', title:'Existing Door Size', sub:'Measure the current door',
+    render(d) {
+      let h = `<div class="form-group"><label>Width</label>${numInput('existingW',d.existingW,'Measure the door leaf width')}</div>
+              <div class="form-group"><label>Height</label>${numInput('existingH',d.existingH,'Measure the door leaf height')}</div>
+              <div class="form-group"><label>Thickness</label>${numInput('existingT',d.existingT,'Standard 35mm or 40mm')}</div>`;
+      h += `<div class="mt14">`;
+      h += photoSlot('photo_existing_door', 'Photo: Existing Door', d);
+      h += photoSlot('photo_frame_stops', 'Photo: Frame & Door Stops', d);
+      h += `</div>`;
+      return h;
+    },
+    validate(d) { return (d.existingW&&d.existingH)?null:'Please enter existing door width and height'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'supplier', title:'Preferred Supplier', sub:'Which supplier/style is the customer after?',
+    render(d) {
+      let h = opts([
+        {value:'Doors Depot',       label:'Doors Depot <span class="muted sm">(max trim: 10mm)</span>'},
+        {value:'Four Seasons',      label:'Four Seasons <span class="muted sm">(max trim: 10mm)</span>'},
+        {value:'Hume Doors',        label:'Hume Doors <span class="muted sm">(max trim: 5mm)</span>'},
+        {value:'Parkwood Composite',label:'Parkwood Composite <span class="muted sm">(max trim: 10mm)</span>'},
+        {value:'Corinthian',        label:'Corinthian <span class="muted sm">(max trim: 10mm)</span>'},
+        {value:'Not Yet Decided',   label:'Not Yet Decided'},
+      ], 'supplier', d.supplier);
+      h += `<div class="form-group mt12"><label>Door Style <span class="muted">(optional)</span></label>
+        <input type="text" data-field="doorStyle" value="${ea(d.doorStyle||'')}" placeholder="e.g. ASCOT, HAMPTON, SORRENTO...">
+      </div>
+      <div class="form-group mt8"><label>Door Product Code</label>
+        ${catWidget('doorProduct', d, {
+          codeField:'doorProductCode', nameField:'doorProductName', priceField:'doorProductPrice',
+          groupField:'doorCatGroup', searchLabel:'Search Door Product',
+          placeholder:'Type part no. or door name…',
+          filterGroups:['hume','corinthian','doors-depot','parkwood']
+        })}
+      </div>`;
+      return h;
+    },
+    validate(d) { return d.supplier?null:'Please select a supplier'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'newSize', title:'New Door Size', sub:'Select the replacement door size',
+    render(d) {
+      const max = SUPPLIER_TRIM[d.supplier]||10;
+      const extWidths = ['820','870','920','1010'];
+      const heights = ['2040','2340'];
+      let h = `<div class="form-group"><label>New Door Width</label>`;
+      h += sizePicker('newW', extWidths, d.newW, 3, d.newW_custom, d);
+      h += `</div>`;
+      h += `<div class="form-group"><label>New Door Height</label>`;
+      h += sizePicker('newH', heights, d.newH, 2, d.newH_custom, d);
+      h += `</div>`;
+      if (d.newW && d.newH && d.existingW && d.existingH) {
+        const wt = num(d.existingW)-num(d.newW); const ht = num(d.existingH)-num(d.newH);
+        const wOk = wt<=max; const hOk = ht<=max;
+        h += `<div class="calc-box">
+          <div class="calc-row"><span>Width trim needed:</span><span class="cv ${wOk&&wt>=0?'cs':'cd'}">${wt}mm</span></div>
+          <div class="calc-row"><span>Height trim needed:</span><span class="cv ${hOk&&ht>=0?'cs':'cd'}">${ht}mm</span></div>
+          <div class="calc-row"><span>Supplier max trim:</span><span class="cv">${max}mm (${d.supplier||'\u2014'})</span></div>
+        </div>`;
+        if (wt>max) { h += banner('danger',`\uD83D\uDED1 STOP \u2014 Width trim (${wt}mm) exceeds ${d.supplier} maximum (${max}mm). Warranty will be voided.`); h += warrantyAck(d,'extDoorW'); }
+        if (ht>max) { h += banner('danger',`\uD83D\uDED1 STOP \u2014 Height trim (${ht}mm) exceeds ${d.supplier} maximum (${max}mm). Warranty will be voided.`); h += warrantyAck(d,'extDoorH'); }
+        if (wt<=max && ht<=max && wt>=0 && ht>=0) h += banner('success',`\u2705 Trim within tolerance \u2014 Width: ${wt}mm, Height: ${ht}mm`);
+      }
+      return h;
+    },
+    validate(d) {
+      if (!d.newW||!d.newH) return 'Please enter new door dimensions';
+      const max=SUPPLIER_TRIM[d.supplier]||10;
+      const wt=num(d.existingW)-num(d.newW); const ht=num(d.existingH)-num(d.newH);
+      if (wt>max) { if (!d.trimWarrantyAck_extDoorW) return 'Please acknowledge the warranty void warning for width trim'; if (!d.trimWarrantyName_extDoorW) return 'Please enter customer name for warranty acknowledgment'; if (!d.trimWarrantySig_extDoorW) return 'Customer signature required for warranty void acknowledgment'; }
+      if (ht>max) { if (!d.trimWarrantyAck_extDoorH) return 'Please acknowledge the warranty void warning for height trim'; if (!d.trimWarrantyName_extDoorH) return 'Please enter customer name for warranty acknowledgment'; if (!d.trimWarrantySig_extDoorH) return 'Customer signature required for warranty void acknowledgment'; }
+      return null;
+    },
+    flags(d) {
+      if (!d.newW||!d.newH||!d.existingW||!d.existingH) return [];
+      return trimFlags(num(d.existingW)-num(d.newW), num(d.existingH)-num(d.newH), d.supplier);
+    }
+  },
+  {
+    id:'seal', title:'Seal Selection', sub:'Seal recommendation based on sizing',
+    render(d) {
+      const rec = sealRec(d.existingH, d.newH);
+      let h = banner('info',`\uD83D\uDCCF ${rec.reason}`);
+      h += `<div class="form-group mt12"><label>Confirm seal selection:</label>
+        ${opts(['RP4 Drop Seal','RP3 Flat Seal','No Seal','Customer to decide'], 'seal', d.seal||rec.type)}
+      </div>
+      <div class="form-group mt12"><label>Bottom of door gap <span class="muted">(optional)</span></label>
+        ${numInput('bottomGap',d.bottomGap,'Note if gap is very tight or unusual')}
+      </div>`;
+      return h;
+    },
+    validate(d) { return d.seal?null:'Please select a seal option'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'hardware', title:'Hardware & Hinges', sub:'Handle, hinges and additional hardware for this door',
+    render(d) {
+      let h = opts(['Reuse existing','New hardware required'], 'hwOption', d.hwOption);
+      if (d.hwOption==='New hardware required') {
+        h += `<div class="hw-section">
+          <h3>\uD83D\uDEAA Main Handle</h3>
+          ${catWidget('mainHw', d, {
+            codeField:'hwModel', nameField:'hwName', priceField:'hwPrice',
+            groupField:'hwGroup', searchLabel:'Search Handle / Hardware',
+            placeholder:'e.g. Sceptre, 11520, Barrel Bolt…',
+            groupLabel:'Hardware Supplier'
+          })}
+          <div class="form-group"><label>Function</label>
+            ${opts(['Entrance (keyed)','Passage (no lock)','Privacy (internal lock)','Deadbolt only','Combination set'], 'hwType', d.hwType)}
+          </div>
+          <div class="form-group"><label>Key alike to existing keys?</label>${yn('keyAlike',d.keyAlike)}</div>
+          ${banner('info','\u2139\uFE0F Handle projection ~60mm \u2014 check screen door clearance if applicable')}
+        </div>
+        <div class="hw-section">
+          <h3>\uD83D\uDD29 Hinges</h3>
+          <div class="form-group"><label>Hinge Type</label>
+            ${opts(['Butt (standard)','Parliament (180\xB0)','Flush Hinge','Tee Hinge','Other'], 'hingeType', d.hingeType, 2)}
+          </div>
+          <div class="form-group"><label>Hinge Size &amp; Finish</label>
+            <input type="text" data-field="hingeSpec" value="${ea(d.hingeSpec||'')}" placeholder="e.g. 100mm SSS, 75mm Brushed Nickel...">
+          </div>
+          <div class="form-group"><label>Number of Hinges</label>
+            ${opts(['2','3','4'], 'hingeQty', d.hingeQty||'3', 3)}
+          </div>
+        </div>
+        <div class="hw-section">
+          <h3>\u2795 Additional Hardware</h3>
+          <p class="sm muted mb8">Add deadbolts, pull bars, roller catches, door knockers, flush bolts, etc.</p>
+          ${renderExtraHardware(d)}
+          <button class="btn btn-outline btn-sm btn-auto mt8" data-action="add-hw">+ Add Hardware Item</button>
+        </div>`;
+      }
+      h += `<div class="mt14">` + photoSlot('photo_hardware', 'Photo: Existing Hardware', d) + `</div>`;
+      return h;
+    },
+    validate(d) { return d.hwOption?null:'Please select a hardware option'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'weatherstop', title:'Weatherstop Upgrade', sub:'Timber stop upgrade with rubber routed stops',
+    render(d) {
+      return `<p class="sm muted mb12">Replaces existing stops with timber + rubber routed stops for improved weather sealing.</p>
+        ${yn('weatherstop', d.weatherstop, ['Yes \u2014 include in quote','No','Customer to decide'], ['y','n','t'])}`;
+    },
+    validate(d) { return d.weatherstop?null:'Please select an option'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'notes', title:'Notes & Photos', sub:'Any additional observations',
+    render(d) {
+      const photoCount = Object.keys(d.photosTaken||{}).length;
+      return `<div class="form-group"><label>Additional notes</label>
+        <textarea data-field="additionalNotes" placeholder="Access issues, customer requests, site conditions...">${esc(d.additionalNotes||'')}</textarea>
+      </div>
+      <div class="banner b-info">\uD83D\uDCF7 Photos captured in this session: <strong>${photoCount} photo(s)</strong></div>`;
+    },
+    validate(d) { return null; },
+    flags(d) { return []; }
+  },
+];
+
+// --- External Door & Frame ---
+const extDoorFrameSteps = [
+  extDoorOnlySteps[0], // location
+  extDoorOnlySteps[1], // weather
+  extDoorOnlySteps[2], // screen
+  {
+    id:'openingSize', title:'Brick Opening Measurement', sub:'Measure the brick-to-brick opening',
+    render(d) {
+      let h = photoSlot('photo_opening', 'Photo: Opening (Brick to Brick)', d);
+      h += `<div class="form-group"><label>Opening Width</label>${numInput('openingW',d.openingW,'Measure in 3 places \u2014 use the smallest')}</div>
+               <div class="form-group"><label>Opening Height</label>${numInput('openingH',d.openingH,'Measure in 3 places \u2014 use the smallest')}</div>`;
+      if (d.openingW && d.openingH) {
+        const fw=num(d.openingW)-20; const fh=num(d.openingH)-20;
+        h += `<div class="size-card"><div class="size-row"><span class="sl">Opening (brick-to-brick)</span><span class="sv">${d.openingW} \xD7 ${d.openingH}mm</span></div>
+          <div class="size-row"><span class="sl">Recommended Frame</span><span class="sv">${fw} \xD7 ${fh}mm</span></div></div>`;
+        h += photoSlot('photo_opening_external', 'Photo: External Face of Opening', d);
+        // Suggested door size
+        const suggested = suggestDoorWidth(d.openingW);
+        const extWidths = ['820','870','920','1010'];
+        const heights = ['2040','2340'];
+        h += `<div class="form-group mt14"><label style="color:var(--navy);font-size:15px;font-weight:700">\uD83D\uDCCF Suggested Door Size</label>`;
+        if (suggested) h += banner('info', `\uD83D\uDCA1 Suggested width: <strong>${suggested}mm</strong> (largest standard that fits opening - frame - clearance)`);
+        h += `<div class="form-group mt8"><label>Door Width</label>`;
+        h += numInput('newW', d.newW || '', 'Enter door width in mm');
+        h += `</div>`;
+        h += `<div class="form-group mt8"><label>Door Height</label>`;
+        h += numInput('newH', d.newH || '', 'Enter door height in mm');
+        h += `</div>`;
+        h += `<div class="form-group mt8"><label>Door Style <span class="muted">(optional)</span></label>
+            <input type="text" data-field="doorStyle" value="${ea(d.doorStyle||'')}" placeholder="e.g. ASCOT, HAMPTON, SORRENTO, FLUSH PANEL..."></div>
+          <div class="form-group mt8"><label>Door Product Code</label>
+            ${catWidget('doorProduct', d, {
+              codeField:'doorProductCode', nameField:'doorProductName', priceField:'doorProductPrice',
+              groupField:'doorCatGroup', searchLabel:'Search Door Product',
+              placeholder:'Type part no. or door name…',
+              filterGroups:['hume','corinthian','doors-depot','parkwood']
+            })}</div>`;
+        h += `</div>`;
+      }
+      return h;
+    },
+    validate(d) { return (d.openingW&&d.openingH)?null:'Please enter opening dimensions'; },
+    flags(d) { return []; }
+  },
+  extDoorOnlySteps[4], // supplier
+  {
+    id:'infill', title:'External Infills (Beading)', sub:'Required for all external frame jobs',
+    render(d) {
+      let h = banner('warn','\u26A0\uFE0F Infills must NEVER be missed on external frame jobs');
+      if (d.openingW && d.openingH) {
+        const fw=num(d.openingW)-20;
+        h += `<div class="calc-box mt8">
+          <div class="calc-row"><span>Frame width:</span><span class="cv">${fw}mm</span></div>
+          <div class="calc-row"><span>Infill type:</span><span class="cv">67 \xD7 18 DAR beading</span></div>
+          <div class="calc-row"><span>Each side approx:</span><span class="cv">~${Math.round((num(d.openingW)-fw)/2)}mm</span></div>
+        </div>`;
+      }
+      h += `<div class="form-group mt12"><label>Infill confirmed in quote?</label>
+        ${yn('infillConfirmed',d.infillConfirmed,['Yes \u2014 added to quote','Needs review'],['y','n'])}</div>`;
+      h += `<div class="mt14">` + photoSlot('photo_external_reveal', 'Photo: External Reveal / Beading Area', d) + `</div>`;
+      return h;
+    },
+    validate(d) { return d.infillConfirmed?null:'Please confirm infill status'; },
+    flags(d) { return [{t:'warn',m:'\u26A0\uFE0F External job \u2014 confirm 67\xD718 DAR beading infills are in the quote.'}]; }
+  },
+  {
+    id:'architraves', title:'Internal Architraves', sub:'Internal reveal treatment',
+    render(d) {
+      let h = `<div class="form-group"><label>Internal reveal type</label>
+        ${opts(['Existing architraves','Gyprock/plaster reveal','Brick reveal'], 'revealType', d.revealType)}
+      </div>`;
+      if (d.revealType==='Existing architraves') {
+        h += `<div class="form-group mt12"><label>Existing architrave width</label>${numInput('existingArchW',d.existingArchW,'Common: 67mm')}</div>`;
+        if (d.existingArchW) {
+          const w=num(d.existingArchW); const rec = w<=67?92:w<=92?118:w+30;
+          h += banner('info',`\uD83D\uDCCF Recommended new size: ${rec}mm (sizing up from ${w}mm for better coverage after frame removal)`);
+          h += `<div class="form-group"><label>Confirm architrave size</label>
+            <input type="text" data-field="newArchSize" value="${ea(d.newArchSize||rec+'mm')}" placeholder="e.g. 92mm"></div>`;
+        }
+      } else if (d.revealType) {
+        h += banner('info','\u2139\uFE0F Use infill/reveal filler on inside to finish the opening');
+      }
+      h += `<div class="mt14">` + photoSlot('photo_internal_reveal', 'Photo: Internal Reveal / Architrave', d) + `</div>`;
+      return h;
+    },
+    validate(d) { return d.revealType?null:'Please select reveal type'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'sealKit', title:'Seal Kit & Weatherproofing', sub:'Required items for external frame jobs',
+    render(d) {
+      return `${banner('info','\u2139\uFE0F Seal kit + Silicone are always required for external frame jobs')}
+        <div class="form-group mt12"><label>Seal kit</label>
+          ${yn('sealKit',d.sealKit||'Yes \u2014 include',['Yes \u2014 include','Needs review'],['y','n'])}
+        </div>
+        <div class="form-group"><label>Silicone</label>
+          ${yn('silicone',d.silicone||'Yes \u2014 include',['Yes \u2014 include','Needs review'],['y','n'])}
+        </div>
+        <div class="form-group"><label>Weather Guard frame stop upgrade?</label>
+          ${yn('weatherstop',d.weatherstop,['Yes \u2014 include in quote','No','Customer to decide'],['y','n','t'])}
+        </div>`;
+    },
+    validate(d) { return (d.sealKit&&d.silicone&&d.weatherstop)?null:'Please confirm all weatherproofing items'; },
+    flags(d) { return []; }
+  },
+  extDoorOnlySteps[7], // hardware
+  extDoorOnlySteps[9], // notes
+];
+
+// --- Internal Door Only ---
+const intDoorOnlySteps = [
+  {
+    id:'location', title:'Room Location', sub:'Which room is this door for?',
+    render(d) { return opts(['Bedroom','Bathroom','Ensuite','Pantry','Laundry','Hallway','Study','Other'], 'location', d.location, 2); },
+    validate(d) { return d.location?null:'Please select a room'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'existingSize', title:'Existing Door Size', sub:'Measure the current door',
+    render(d) {
+      let h = `<div class="form-group"><label>Width</label>${numInput('existingW',d.existingW,'')}</div>
+              <div class="form-group"><label>Height</label>${numInput('existingH',d.existingH,'')}</div>
+              <div class="form-group"><label>Thickness</label>${numInput('existingT',d.existingT,'Standard 35mm')}</div>`;
+      h += `<div class="mt14">`;
+      h += photoSlot('photo_int_door', 'Photo: Existing Door', d);
+      h += photoSlot('photo_int_frame', 'Photo: Door Frame & Stops', d);
+      h += `</div>`;
+      return h;
+    },
+    validate(d) { return (d.existingW&&d.existingH)?null:'Please enter existing door dimensions'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'floorFinish', title:'Floor Finish', sub:'Floor type at this doorway',
+    render(d) {
+      return `<div class="form-group"><label>Floor type</label>
+        ${opts(['Carpet','Tiles','Floorboards','Concrete','Other'], 'floorFinish', d.floorFinish, 2)}
+      </div>
+      <div class="form-group mt12"><label>Floor finish height change at doorway <span class="muted">(optional)</span></label>
+        ${numInput('floorChangeH',d.floorChangeH,'e.g. tile thickness or carpet depth')}
+      </div>
+      <div class="form-group mt8"><label>Required gap under door</label>
+        ${numInput('bottomGap',d.bottomGap,'Typically 10\u201315mm carpet, 5\u20138mm tiles')}
+      </div>`;
+    },
+    validate(d) { return d.floorFinish?null:'Please select floor type'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'supplier', title:'Supplier & Style', sub:'Which supplier and door style?',
+    render(d) {
+      let h = `<div class="form-group"><label>Supplier</label>
+        ${opts([
+          {value:'Hume Doors',  label:'Hume Doors <span class="muted sm">(max trim: 5mm)</span>'},
+          {value:'Corinthian',  label:'Corinthian <span class="muted sm">(max trim: 10mm)</span>'},
+          {value:'Doors Depot', label:'Doors Depot <span class="muted sm">(max trim: 10mm)</span>'},
+          {value:'Other',       label:'Other'},
+        ], 'supplier', d.supplier)}
+      </div>
+      <div class="form-group mt12"><label>Door style <span class="muted">(optional)</span></label>
+        <input type="text" data-field="doorStyle" value="${ea(d.doorStyle||'')}" placeholder="e.g. ASCOT, HAMPTON, SORRENTO...">
+      </div>
+      <div class="form-group mt8"><label>Door Product Code</label>
+        ${catWidget('doorProduct', d, {
+          codeField:'doorProductCode', nameField:'doorProductName', priceField:'doorProductPrice',
+          groupField:'doorCatGroup', searchLabel:'Search Door Product',
+          placeholder:'Type part no. or door name…',
+          filterGroups:['hume','corinthian','doors-depot']
+        })}
+      </div>`;
+      return h;
+    },
+    validate(d) { return d.supplier?null:'Please select a supplier'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'newSize', title:'New Door Size', sub:'Select the replacement door size',
+    render(d) {
+      const max=SUPPLIER_TRIM[d.supplier]||10;
+      const intWidths = ['620','720','770','820','870','920','1010'];
+      const heights = ['2040','2340'];
+      let h = `<div class="form-group"><label>New Door Width</label>`;
+      h += sizePicker('newW', intWidths, d.newW, 3, d.newW_custom, d);
+      h += `</div>`;
+      h += `<div class="form-group"><label>New Door Height</label>`;
+      h += sizePicker('newH', heights, d.newH, 2, d.newH_custom, d);
+      h += `</div>`;
+      if (d.newW&&d.newH&&d.existingW&&d.existingH) {
+        const wt=num(d.existingW)-num(d.newW); const ht=num(d.existingH)-num(d.newH);
+        h += `<div class="calc-box">
+          <div class="calc-row"><span>Width trim:</span><span class="cv ${wt>max?'cd':wt>=0?'cs':'co'}">${wt}mm</span></div>
+          <div class="calc-row"><span>Height trim:</span><span class="cv ${ht>max?'cd':ht>=0?'cs':'co'}">${ht}mm</span></div>
+          <div class="calc-row"><span>Max trim (${d.supplier||'\u2014'}):</span><span class="cv">${max}mm</span></div>
+        </div>`;
+        if (wt>max||ht>max) { h += banner('danger',`\uD83D\uDED1 STOP \u2014 Trim exceeds ${d.supplier} maximum (${max}mm). Warranty will be voided.`); h += warrantyAck(d,'intDoor'); }
+        else if (wt>=0&&ht>=0) h += banner('success',`\u2705 Trim within tolerance \u2014 Width: ${wt}mm, Height: ${ht}mm`);
+      }
+      return h;
+    },
+    validate(d) {
+      if (!d.newW||!d.newH) return 'Please enter new door dimensions';
+      const max=SUPPLIER_TRIM[d.supplier]||10;
+      const wt=num(d.existingW)-num(d.newW); const ht=num(d.existingH)-num(d.newH);
+      if ((wt>max||ht>max) && !d.trimWarrantyAck_intDoor) return 'Please acknowledge the warranty void warning';
+      if ((wt>max||ht>max) && d.trimWarrantyAck_intDoor && !d.trimWarrantyName_intDoor) return 'Please enter customer name for warranty acknowledgment'; if ((wt>max||ht>max) && d.trimWarrantyAck_intDoor && d.trimWarrantyName_intDoor && !d.trimWarrantySig_intDoor) return 'Customer signature required for warranty void acknowledgment';
+      return null;
+    },
+    flags(d) {
+      if (!d.newW||!d.newH||!d.existingW||!d.existingH) return [];
+      return trimFlags(num(d.existingW)-num(d.newW), num(d.existingH)-num(d.newH), d.supplier);
+    }
+  },
+  {
+    id:'hardware', title:'Hardware & Hinges', sub:'Handle, hinges and additional hardware for this door',
+    render(d) {
+      let h = opts(['Reuse existing','New hardware required'], 'hwOption', d.hwOption);
+      if (d.hwOption==='New hardware required') {
+        h += `<div class="hw-section">
+          <h3>\uD83D\uDEAA Main Handle</h3>
+          ${catWidget('mainHw', d, {
+            codeField:'hwModel', nameField:'hwName', priceField:'hwPrice',
+            groupField:'hwGroup', searchLabel:'Search Handle / Hardware',
+            placeholder:'e.g. Passage, 11400, Privacy…',
+            groupLabel:'Hardware Supplier'
+          })}
+          <div class="form-group"><label>Function</label>
+            ${opts(['Passage (no lock)','Privacy (bathroom/ensuite)','Entrance (keyed)','Combination set'], 'hwType', d.hwType)}
+          </div>
+        </div>
+        <div class="hw-section">
+          <h3>\uD83D\uDD29 Hinges</h3>
+          <div class="form-group"><label>Hinge Type</label>
+            ${opts(['Butt (standard)','Parliament (180\xB0)','Flush Hinge','Tee Hinge','Other'], 'hingeType', d.hingeType, 2)}
+          </div>
+          <div class="form-group"><label>Hinge Size &amp; Finish</label>
+            <input type="text" data-field="hingeSpec" value="${ea(d.hingeSpec||'')}" placeholder="e.g. 100mm SSS, 75mm Brushed Nickel...">
+          </div>
+          <div class="form-group"><label>Number of Hinges</label>
+            ${opts(['2','3','4'], 'hingeQty', d.hingeQty||'3', 3)}
+          </div>
+        </div>
+        <div class="hw-section">
+          <h3>\u2795 Additional Hardware</h3>
+          <p class="sm muted mb8">Add roller catches, flush bolts, door knockers, etc.</p>
+          ${renderExtraHardware(d)}
+          <button class="btn btn-outline btn-sm btn-auto mt8" data-action="add-hw">+ Add Hardware Item</button>
+        </div>`;
+      }
+      return h;
+    },
+    validate(d) { return d.hwOption?null:'Please select a hardware option'; },
+    flags(d) { return []; }
+  },
+  {
+    id:'hinges', title:'Hinge Alignment', sub:'Check hinge position compatibility',
+    render(d) {
+      let h = `<div class="form-group"><label>Are hinge positions compatible with new door?</label>
+        ${opts(['Yes','No','Unsure'], 'hingesOk', d.hingesOk)}
+      </div>`;
+      if (d.hingesOk==='No'||d.hingesOk==='Unsure') h += banner('warn','\u26A0\uFE0F Hinge position may need adjustment \u2014 note for installer to verify on site.');
+      return h;
+    },
+    validate(d) { return d.hingesOk?null:'Please select an option'; },
+    flags(d) {
+      if (d.hingesOk==='No'||d.hingesOk==='Unsure') return [{t:'warn',m:'\u26A0\uFE0F Hinge positions may not be compatible \u2014 verify on installation.'}];
+      return [];
+    }
+  },
+  extDoorOnlySteps[9], // notes
+];
+
+// --- Internal Door & Frame ---
+const intDoorFrameSteps = [
+  intDoorOnlySteps[0], // location
+  {
+    id:'openingSize', title:'Opening Measurement', sub:'Measure the opening (not the door)',
+    render(d) {
+      let h = photoSlot('photo_int_opening', 'Photo: Opening Measurement', d);
+      h += `<div class="form-group"><label>Opening Width</label>${numInput('openingW',d.openingW,'Measure in 3 places \u2014 use the smallest')}</div>
+               <div class="form-group"><label>Opening Height</label>${numInput('openingH',d.openingH,'Measure in 3 places \u2014 use the smallest')}</div>`;
+      if (d.openingW&&d.openingH) {
+        const fw=num(d.openingW)-20; const fh=num(d.openingH)-20;
+        h += `<div class="size-card"><div class="size-row"><span class="sl">Opening</span><span class="sv">${d.openingW} \xD7 ${d.openingH}mm</span></div>
+          <div class="size-row"><span class="sl">Recommended Frame</span><span class="sv">${fw} \xD7 ${fh}mm</span></div></div>`;
+        // Suggested door size
+        const suggested = suggestDoorWidth(d.openingW);
+        const intWidths = ['620','720','770','820','870','920','1010'];
+        const heights = ['2040','2340'];
+        h += `<div class="form-group mt14"><label style="color:var(--navy);font-size:15px;font-weight:700">\uD83D\uDCCF Suggested Door Size</label>`;
+        if (suggested) h += banner('info', `\uD83D\uDCA1 Suggested width: <strong>${suggested}mm</strong> (largest standard that fits opening - frame - clearance)`);
+        h += `<div class="form-group mt8"><label>Door Width</label>`;
+        h += numInput('newW', d.newW || '', 'Enter door width in mm');
+        h += `</div>`;
+        h += `<div class="form-group mt8"><label>Door Height</label>`;
+        h += numInput('newH', d.newH || '', 'Enter door height in mm');
+        h += `</div>`;
+        h += `<div class="form-group mt8"><label>Door Style <span class="muted">(optional)</span></label>
+            <input type="text" data-field="doorStyle" value="${ea(d.doorStyle||'')}" placeholder="e.g. ASCOT, HAMPTON, SORRENTO, FLUSH PANEL..."></div>
+          <div class="form-group mt8"><label>Door Product Code</label>
+            ${catWidget('doorProduct', d, {
+              codeField:'doorProductCode', nameField:'doorProductName', priceField:'doorProductPrice',
+              groupField:'doorCatGroup', searchLabel:'Search Door Product',
+              placeholder:'Type part no. or door name…',
+              filterGroups:['hume','corinthian','doors-depot']
+            })}</div>`;
+        h += `</div>`;
+      }
+      return h;
+    },
+    validate(d) { return (d.openingW&&d.openingH)?null:'Please enter opening dimensions'; },
+    flags(d) { return []; }
+  },
+  intDoorOnlySteps[2], // floor finish
+  intDoorOnlySteps[3], // supplier
+  intDoorOnlySteps[4], // new size (smart picker, internal sizes)
+  {
+    id:'architraves', title:'Architraves & Door Stops', sub:'Internal finishing details',
+    render(d) {
+      let h = `<div class="form-group"><label>Existing architrave width <span class="muted">(optional)</span></label>
+        ${numInput('existingArchW',d.existingArchW,'Common: 67mm')}
+      </div>`;
+      if (d.existingArchW) {
+        const w=num(d.existingArchW); const rec=w<=67?92:w<=92?118:w+30;
+        h += banner('info',`\uD83D\uDCCF Recommend sizing up to ${rec}mm for better coverage after frame removal`);
+        h += `<div class="form-group"><label>New architrave size</label>
+          <input type="text" data-field="newArchSize" value="${ea(d.newArchSize||rec+'mm')}" placeholder="e.g. 92mm"></div>`;
+      }
+      h += `<div class="form-group mt12"><label>Door stops</label>
+        ${yn('doorStops',d.doorStops,['Yes \u2014 include in quote','No'],['y','n'])}
+      </div>
+      <div class="form-group"><label>Trim/paint allowance noted?</label>
+        ${yn('paintNote',d.paintNote,['Yes','No \u2014 add note'],['y','n'])}
+      </div>`;
+      if (d.paintNote==='No \u2014 add note') h += banner('warn','\u26A0\uFE0F Remind customer \u2014 allow for painting/staining of new frame and architraves.');
+      return h;
+    },
+    validate(d) { return null; },
+    flags(d) { return []; }
+  },
+  intDoorOnlySteps[5], // hardware
+  intDoorOnlySteps[6], // hinges
+  extDoorOnlySteps[9], // notes
+];
+
+// --- Basic wizard factory ---
+function makeBasicWizard(typeName, checklistItems, reviewNote, photoPrefix) {
+  return [
+    {
+      id:'location', title:'Location / Room', sub:'Where is this door?',
+      render(d) {
+        return `<div class="form-group"><label>Location description</label>
+          <input type="text" data-field="location" value="${ea(d.location||'')}" placeholder="e.g. Front entry, Lounge, Bedroom..."></div>`;
+      },
+      validate(d) { return d.location?null:'Please enter a location'; },
+      flags(d) { return []; }
+    },
+    {
+      id:'openingSize', title:'Opening Size', sub:'Measure the opening width and height',
+      render(d) {
+        return `<div class="form-group"><label>Opening Width</label>${numInput('openingW',d.openingW,'')}</div>
+                <div class="form-group"><label>Opening Height</label>${numInput('openingH',d.openingH,'')}</div>`;
+      },
+      validate(d) { return (d.openingW&&d.openingH)?null:'Please enter opening dimensions'; },
+      flags(d) { return []; }
+    },
+    {
+      id:'requirements', title:'Key Requirements', sub:`Checklist for ${typeName}`,
+      render(d) {
+        const checked = d.reqsChecked||[];
+        let h = reviewNote?banner('warn',reviewNote):'';
+        h += `<ul class="checklist">${checklistItems.map(item=>`<li>
+          <input type="checkbox" class="rc" data-req="${ea(item)}" ${checked.includes(item)?'checked':''}><span>${item}</span>
+        </li>`).join('')}</ul>`;
+        return h;
+      },
+      validate(d) { return null; },
+      flags(d) { return []; }
+    },
+    {
+      id:'notes', title:'Notes & Photos', sub:'Additional observations',
+      render(d) {
+        const photoCount = Object.keys(d.photosTaken||{}).length;
+        let h = `<div class="form-group"><label>Additional notes</label>
+          <textarea data-field="additionalNotes" placeholder="Observations, measurements, customer requests...">${esc(d.additionalNotes||'')}</textarea>
+        </div>`;
+        h += photoSlot(`${photoPrefix}_opening`, 'Photo: Opening', d);
+        h += photoSlot(`${photoPrefix}_current`, 'Photo: Current Door / Installation', d);
+        h += photoSlot(`${photoPrefix}_hardware`, 'Photo: Hardware', d);
+        h += `<div class="banner b-info mt8">\uD83D\uDCF7 Photos captured in this session: <strong>${photoCount} photo(s)</strong></div>`;
+        return h;
+      },
+      validate(d) { return null; },
+      flags(d) { return []; }
+    },
+  ];
+}
+
+const WIZARDS = {
+  extDoorOnly:  extDoorOnlySteps,
+  extDoorFrame: extDoorFrameSteps,
+  intDoorOnly:  intDoorOnlySteps,
+  intDoorFrame: intDoorFrameSteps,
+  doubleDoors: makeBasicWizard('Double Doors',[
+    'Mushroom stops confirmed preferred (not rebate unless requested)',
+    'Hardware type confirmed for each door',
+    'Meeting stile detail noted',
+    'Sizes for each door leaf noted (e.g. 2 \xD7 870mm)',
+    'Overall opening width measured',
+    'Frame or door-only scope confirmed',
+  ], null, 'dbl'),
+  catKitten: makeBasicWizard('Cat & Kitten Door',[
+    'Leader door size noted (e.g. 720mm wide)',
+    'Kitten door size noted (e.g. 410mm wide)',
+    'Flush bolts required \u2014 included in quote',
+    'Alignment labour allowed for',
+    'Floor type noted',
+    'Hardware type for leader door',
+  ], null, 'cat'),
+  wallSlider: makeBasicWizard('Wall Face Slider',[
+    'Clear wall space confirmed (at least door width + clearance)',
+    'Obstructions checked (power points, switches, pipes)',
+    'Architrave interference checked',
+    'Floor finish type noted',
+    'Track type/length noted',
+    'Wall plate required \u2014 noted in quote',
+    'Door stops required \u2014 noted',
+    'Guide type (floor or wall) noted',
+  ], null, 'wsl'),
+  barnDoor: makeBasicWizard('Barn Door',[
+    'Stud location confirmed for mounting',
+    'Mounting strength/wall type adequate',
+    'Clear wall width confirmed (door width \xD7 1.5 minimum)',
+    'Hardware style noted (track finish/brand)',
+    'Track required \u2014 noted in quote',
+    'Wall plate required \u2014 noted',
+    'Flush pulls required \u2014 noted',
+    'Stopper required \u2014 noted',
+  ], null, 'brn'),
+  bifold: makeBasicWizard('Bifold / Multifold',[
+    'Opening size measured (W \xD7 H)',
+    'Top mount or bottom guide confirmed',
+    'Stack direction confirmed (left, right, or both sides)',
+    'Number of panels noted',
+    'Hardware type/finish noted',
+    'Weather exposure noted (if external \u2014 flag for review)',
+  ], '\u26A0\uFE0F If external bifold \u2014 manual review required. Flag for desktop quote.', 'bif'),
+};
+
+// ====================== OUTPUT GENERATION ======================
+function getAllFlags(doorData, wizKey) {
+  const steps = WIZARDS[wizKey]||[];
+  const seen = new Set(); const flags = [];
+  steps.forEach(s => {
+    (s.flags(doorData)||[]).forEach(f => {
+      if (!seen.has(f.m)) { seen.add(f.m); flags.push(f); }
+    });
+  });
+  return flags;
+}
+
+function genNotesText(doorData, typeId) {
+  const wk = getWizKey(typeId);
+  const isExtFrame = wk==='extDoorFrame';
+  const isExtOnly  = wk==='extDoorOnly';
+  const isIntFrame = wk==='intDoorFrame';
+  const isIntOnly  = wk==='intDoorOnly';
+  const isBasic = ['doubleDoors','catKitten','wallSlider','barnDoor','bifold'].includes(wk);
+  const flags = getAllFlags(doorData, wk);
+  const label = getDTLabel(typeId);
+  let t = `ON-SITE QUOTE \u2014 ${fmtDate()}\n\n`;
+  if (S.job.podiumNotes) t += `Customer enquiry: ${S.job.podiumNotes}\n\n`;
+  t += `SCOPE: ${label}, ${doorData.location||'Location TBC'}, ${isExtFrame||isIntFrame?'Door & Frame':'Door Only'}\n`;
+  if (isExtOnly||isExtFrame) t += `WEATHER: ${doorData.weatherExposure||'Not specified'}\n`;
+  if (isExtOnly) t += `EXISTING DOOR: ${doorData.existingW||'?'} \xD7 ${doorData.existingH||'?'} \xD7 ${doorData.existingT||'?'}mm\n`;
+  if (isExtFrame||isIntFrame) {
+    const fw=doorData.openingW?num(doorData.openingW)-20:'?'; const fh=doorData.openingH?num(doorData.openingH)-20:'?';
+    t += `OPENING: ${doorData.openingW||'?'} \xD7 ${doorData.openingH||'?'}mm\nFRAME SIZE: ${fw} \xD7 ${fh}mm\n`;
+  }
+  if (isExtOnly||isIntOnly) {
+    const wt=doorData.existingW&&doorData.newW?num(doorData.existingW)-num(doorData.newW):'?';
+    const ht=doorData.existingH&&doorData.newH?num(doorData.existingH)-num(doorData.newH):'?';
+    t += `NEW DOOR: ${doorData.newW||'?'} \xD7 ${doorData.newH||'?'}mm \u2014 Trim: W=${wt}mm H=${ht}mm\n`;
+  }
+  if (isExtFrame||isIntFrame) {
+    if (doorData.newW&&doorData.newH) t += `DOOR SIZE: ${doorData.newW} \xD7 ${doorData.newH}mm${doorData.doorStyle?' \u2014 '+doorData.doorStyle:''}\n`;
+  }
+  if (isIntOnly||isIntFrame) {
+    if (doorData.floorFinish) t += `FLOOR: ${doorData.floorFinish}${doorData.bottomGap?`, gap: ${doorData.bottomGap}mm`:''}\n`;
+  }
+  if (doorData.seal) t += `SEAL: ${doorData.seal}\n`;
+  if (doorData.supplier) t += `SUPPLIER: ${doorData.supplier}${doorData.doorStyle&&!isExtFrame&&!isIntFrame?' \u2014 '+doorData.doorStyle:''}\n`;
+  if (doorData.hwOption) {
+    if (doorData.hwOption==='New hardware required') {
+      t += `HARDWARE: ${doorData.hwSupplier||'Supplier TBC'} \u2014 ${doorData.hwModel||'Model TBC'}${doorData.hwType?' ('+doorData.hwType+')':''}${doorData.keyAlike==='Yes'?', Key alike':''}\n`;
+      if (doorData.hingeType) t += `HINGES: ${doorData.hingeQty||'3'} \xD7 ${doorData.hingeSpec||'size TBC'} \u2014 ${doorData.hingeType}\n`;
+      if (doorData.extraHardware && doorData.extraHardware.length > 0) {
+        const validHW = doorData.extraHardware.filter(it => it.supplier||it.model);
+        if (validHW.length > 0) {
+          t += `ADDITIONAL HARDWARE:\n`;
+          validHW.forEach(it => { t += `  \u2014 ${it.supplier||'Supplier TBC'} ${it.model||'Model TBC'} \xD7${it.qty||1}\n`; });
+        }
+      }
+      if (doorData.doorProductCode) t += `DOOR CODE: ${doorData.doorProductCode}\n`;
+    } else {
+      t += `HARDWARE: Reuse existing\n`;
+    }
+  }
+  if (doorData.hasScreen) t += `SCREEN DOOR: ${doorData.hasScreen}${doorData.stopWidth?', Stop: '+doorData.stopWidth+'mm':''}${doorData.stopFixed?', Fixed: '+doorData.stopFixed:''}\n`;
+  if (isExtOnly||isExtFrame) {
+    if (doorData.weatherstop) t += `WEATHER STOP UPGRADE: ${doorData.weatherstop}\n`;
+  }
+  if (isExtFrame) {
+    t += `INFILLS: 67\xD718 DAR beading \u2014 ${doorData.infillConfirmed||'confirm'}\n`;
+    t += `SEAL KIT: ${doorData.sealKit||'confirm'}\nSILICONE: ${doorData.silicone||'confirm'}\n`;
+  }
+  if (isBasic && doorData.reqsChecked && doorData.reqsChecked.length>0) {
+    t += `\nCHECKLIST ITEMS CONFIRMED:\n${doorData.reqsChecked.map(r=>'\u2713 '+r).join('\n')}\n`;
+  }
+  if (doorData.additionalNotes) t += `\nSITE OBSERVATIONS:\n${doorData.additionalNotes}\n`;
+  const photoCount = Object.keys(doorData.photosTaken||{}).length;
+  if (photoCount>0) t += `\nPHOTOS: ${photoCount} photo(s) captured on site\n`;
+  if (flags.length>0) t += `\nFLAGS / INFO REQUIRED:\n${flags.map(f=>f.m).join('\n')}\n`;
+  t += `\nSTATUS: Draft \u2013 GM Review Required`;
+  return t;
+}
+
+function genSimproItems(doorData, typeId) {
+  const wk = getWizKey(typeId);
+  const isExtFrame = wk==='extDoorFrame';
+  const isIntFrame = wk==='intDoorFrame';
+  const label = getDTLabel(typeId);
+  const items = [];
+  items.push(`\u25A1 [Prebuild: ${label}${doorData.newW?' \u2014 '+doorData.newW+'\xD7'+(doorData.newH||'?')+'mm':''}${doorData.doorStyle?' '+doorData.doorStyle:''}]`);
+  items.push(`\u25A1 [Labour: ${isExtFrame||isIntFrame?'Door & Frame Install':'Door Only Install'}]`);
+  if (doorData.seal&&doorData.seal!=='No Seal') items.push(`\u25A1 [Seal: ${doorData.seal}]`);
+  if (doorData.hwOption==='New hardware required') items.push(`\u25A1 [Hardware: ${doorData.hwSupplier||'Supplier TBC'} \u2014 ${doorData.hwModel||'model TBC'}${doorData.keyAlike===('Yes')?', key alike':''}]`);
+  if (doorData.hingeType) items.push(`\u25A1 [Hinges: ${doorData.hingeQty||'3'} \xD7 ${doorData.hingeSpec||'TBC'} \u2014 ${doorData.hingeType}]`);
+  if (doorData.extraHardware) {
+    doorData.extraHardware.filter(it=>it.supplier||it.model).forEach(it => {
+      items.push(`\u25A1 [Additional HW: ${it.supplier||'TBC'} \u2014 ${it.model||'TBC'} \xD7${it.qty||1}]`);
+    });
+  }
+  if (doorData.doorProductCode) items.push(`\u25A1 [Door Code: ${doorData.doorProductCode}]`);
+  if (isExtFrame) { items.push('\u25A1 [Infills: 67\xD718 DAR beading \u2014 REQUIRED]'); items.push('\u25A1 [Seal kit \u2014 REQUIRED]'); items.push('\u25A1 [Silicone \u2014 REQUIRED]'); }
+  if (doorData.revealType==='Existing architraves'||doorData.doorStops==='Yes \u2014 include in quote') items.push(`\u25A1 [Architraves: ${doorData.newArchSize||'size TBC'}]`);
+  if (doorData.weatherstop==='Yes \u2014 include in quote') items.push('\u25A1 [Weather Guard stop upgrade]');
+  if (doorData.hasScreen==='Yes'&&(num(doorData.stopWidth)<70||doorData.stopFixed==='Yes')) items.push('\u25A1 [Screen door refit \u2014 FLAG: clearance check required]');
+  if (doorData.doorStops==='Yes \u2014 include in quote') items.push('\u25A1 [Door stops]');
+  return items;
+}
+
+function genSizingLines(doorData, typeId) {
+  const wk = getWizKey(typeId);
+  const isExtFrame = wk==='extDoorFrame'; const isIntFrame = wk==='intDoorFrame';
+  const isExtOnly = wk==='extDoorOnly';   const isIntOnly = wk==='intDoorOnly';
+  const isBasic = ['doubleDoors','catKitten','wallSlider','barnDoor','bifold'].includes(wk);
+  if (isExtFrame||isIntFrame) {
+    const fw=doorData.openingW?num(doorData.openingW)-20:'?'; const fh=doorData.openingH?num(doorData.openingH)-20:'?';
+    let s = `Opening: ${doorData.openingW||'?'} \xD7 ${doorData.openingH||'?'}mm\nFrame:   ${fw} \xD7 ${fh}mm`;
+    if (doorData.newW&&doorData.newH) s += `\nDoor:    ${doorData.newW} \xD7 ${doorData.newH}mm`;
+    return s;
+  } else if (isExtOnly) {
+    const wt=doorData.existingW&&doorData.newW?num(doorData.existingW)-num(doorData.newW):'?';
+    const ht=doorData.existingH&&doorData.newH?num(doorData.existingH)-num(doorData.newH):'?';
+    const max=SUPPLIER_TRIM[doorData.supplier]||10;
+    const ok = typeof wt==='number'&&typeof ht==='number'&&wt<=max&&ht<=max;
+    return `Existing: ${doorData.existingW||'?'} \xD7 ${doorData.existingH||'?'}mm\nNew Door: ${doorData.newW||'?'} \xD7 ${doorData.newH||'?'}mm\nTrim: W=${wt}mm H=${ht}mm \u2014 ${ok?'\u2705 Within tolerance':'\uD83D\uDED1 CHECK REQUIRED'}`;
+  } else if (isIntOnly) {
+    const wt=doorData.existingW&&doorData.newW?num(doorData.existingW)-num(doorData.newW):'?';
+    const ht=doorData.existingH&&doorData.newH?num(doorData.existingH)-num(doorData.newH):'?';
+    return `Existing: ${doorData.existingW||'?'} \xD7 ${doorData.existingH||'?'}mm\nNew Door: ${doorData.newW||'?'} \xD7 ${doorData.newH||'?'}mm\nTrim: W=${wt}mm H=${ht}mm`;
+  } else if (isBasic) {
+    return `Opening: ${doorData.openingW||'?'} \xD7 ${doorData.openingH||'?'}mm`;
+  }
+  return '';
+}
+
+function genFullOutput() {
+  const {job, completedDoors} = S;
+  let o = `\u2554${'═'.repeat(36)}\u2557\n\u2551   2ND FIX \u2014 QUOTE SUMMARY          \u2551\n\u255A${'═'.repeat(36)}\u255D\n`;
+  o += `\nJOB: ${job.jobNumber||'TBC'} \u2014 ${job.customerName||'No Name'}\nADDRESS: ${job.address||'Not provided'}\nDATE: ${fmtDate()}\nDOORS: ${completedDoors.length}\n`;
+  completedDoors.forEach((door,i) => {
+    const flags = getAllFlags(door.data, getWizKey(door.typeId));
+    const items = genSimproItems(door.data, door.typeId);
+    const sizing = genSizingLines(door.data, door.typeId);
+    const notes = genNotesText(door.data, door.typeId);
+    const label = getDTLabel(door.typeId);
+    o += `\n${'═'.repeat(40)}\nDOOR ${i+1}: ${label}\n${'═'.repeat(40)}\n`;
+    if (sizing) o += `\n\uD83D\uDCCF SIZING\n${sizing}\n`;
+    if (flags.length>0) o += `\n\u26A0\uFE0F FLAGS\n${flags.map(f=>f.m).join('\n')}\n`;
+    o += `\n\uD83C\uDFD7\uFE0F SIMPRO \u2014 ITEMS TO ADD\nCost Centre: ${label} \u2014 ${door.data.location||'Location TBC'}\n${items.join('\n')}\n`;
+    o += `\n\uD83D\uDCDD SIMPRO NOTES\n${'\u2500'.repeat(40)}\n${notes}\n${'\u2500'.repeat(40)}\n`;
+  });
+  return o;
+}
+
+// ====================== RENDERING ======================
+let _rerenderTimer = null;
+function scheduleRerender(focusField, cursorPos) {
+  clearTimeout(_rerenderTimer);
+  _rerenderTimer = setTimeout(() => {
+    render();
+    if (focusField) {
+      const el = document.querySelector(`[data-field="${focusField}"]`);
+      if (el) { el.focus(); try{el.setSelectionRange(cursorPos,cursorPos);}catch(e){} }
+    }
+  }, 280);
+}
+
+function loggedInHeader() {
+  return `<div class="header-user"><span class="header-user-name">${esc(loggedInUser.firstName)}</span><button class="btn-logout" data-action="logout">Logout</button></div>`;
+}
+
+function renderLogin() {
+  return `<div class="login-screen"><div class="login-card">
+    <div class="login-brand"><div class="login-brand-mark">🚪</div><h1>2nd Fix Quote Wizard</h1><p>Please log in to continue</p></div>
+    <form class="login-form" id="loginForm">
+      ${loginError ? `<div class="login-error">${esc(loginError)}</div>` : ''}
+      <div class="form-group"><label for="loginEmail">Email</label><input type="email" id="loginEmail" autocomplete="username" placeholder="you@2ndfix.com.au" required></div>
+      <div class="form-group"><label for="loginPassword">Password</label><input type="password" id="loginPassword" autocomplete="current-password" placeholder="Enter your password" required></div>
+      <button class="btn btn-orange mt8" type="submit">Log In</button>
+    </form>
+  </div></div>`;
+}
+
+function updateLoginOnlyElements() {
+  const hide = !loggedInUser;
+  const improveBtn = document.getElementById('improveBtn');
+  const improveOverlay = document.getElementById('improveOverlay');
+  if (improveBtn) improveBtn.style.display = hide ? 'none' : '';
+  if (improveOverlay && hide) improveOverlay.style.display = 'none';
+}
+
+function render() {
+  const app = document.getElementById('app');
+  app.classList.toggle('login-active', !loggedInUser);
+  if (!loggedInUser) app.innerHTML = renderLogin();
+  else if (S.screen==='home')    app.innerHTML = renderHome();
+  else if (S.screen==='wizard')   app.innerHTML = renderWizard();
+  else if (S.screen==='summary')  app.innerHTML = renderSummary();
+  attachListeners();
+  updateLoginOnlyElements();
+  saveSt();
+}
+
+function renderHome() {
+  const {job, completedDoors} = S;
+  let h = `<div class="app-header"><h1>\uD83D\uDEAA 2nd Fix Quote Wizard <span style="font-size:12px;opacity:0.7">v3</span></h1>${completedDoors.length>0?`<span class="header-badge">${completedDoors.length} door${completedDoors.length>1?'s':''}</span>`:''}${loggedInHeader()}</div>`;
+  h += `<div class="screen screen-enter">`;
+
+  if (completedDoors.length>0) {
+    h += `<div class="card"><h3>Doors Captured (${completedDoors.length})</h3>`;
+    completedDoors.forEach((d,i) => {
+      const dt = getDTInfo(d.typeId);
+      h += `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:22px">${dt.emoji||'\uD83D\uDEAA'}</span>
+        <div style="flex:1"><div class="fw6 sm c-navy">${getDTLabel(d.typeId)}</div><div class="muted sm">${d.data.location||'Location TBC'}</div></div>
+      </div>`;
+    });
+    h += `<button class="btn btn-orange mt12" data-action="view-summary">\uD83D\uDCCB View Full Summary</button></div>`;
+  }
+
+  h += `<div class="card"><h2>Job Details</h2>
+    <div class="form-group"><label>Customer Name</label><input type="text" data-job="customerName" value="${ea(job.customerName)}" placeholder="Customer name..."></div>
+    <div class="form-group"><label>Simpro Job #</label><input type="text" data-job="jobNumber" value="${ea(job.jobNumber)}" placeholder="Job number..."></div>
+    <div class="form-group"><label>Address</label><input type="text" data-job="address" value="${ea(job.address)}" placeholder="Site address..."></div>
+    <div class="form-group"><label>Podium Notes / Briefing</label><textarea data-job="podiumNotes" placeholder="Paste any notes from Podium or Simpro...">${esc(job.podiumNotes)}</textarea></div>
+  </div>`;
+
+  h += `<div class="card"><h2>Select Door Type</h2><p class="sm muted mb12">Tap a door type to begin the quote wizard</p>
+    <div class="door-grid">`;
+  DOOR_TYPES.forEach(dt => {
+    h += `<button class="door-btn" data-doortype="${dt.id}"><span class="icon">${dt.emoji}</span><span class="lbl">${dt.label.replace('\n','<br>')}</span></button>`;
+  });
+  h += `</div></div>`;
+
+  if (completedDoors.length>0) {
+    h += `<div style="padding:0 2px"><button class="btn btn-outline-red btn-sm" data-action="new-job">\uD83D\uDDD1\uFE0F Start New Job (clears all data)</button></div>`;
+  }
+  h += `</div>`;
+  return h;
+}
+
+function renderWizard() {
+  const wk = getWizKey(S.currentTypeId);
+  const steps = WIZARDS[wk]||[];
+  const step = steps[S.currentStep];
+  if (!step) return '<div class="screen"><p>Error: unknown step</p></div>';
+  const dtInfo = getDTInfo(S.currentTypeId);
+  const isBasic = ['doubleDoors','catKitten','wallSlider','barnDoor','bifold'].includes(wk);
+  const prog = Math.round(((S.currentStep+1)/(steps.length+1))*100);
+
+  let h = `<div class="app-header">
+    <button class="btn-back" data-action="back">\u2190 Back</button>
+    <h1>${dtInfo.emoji||'\uD83D\uDEAA'} ${(dtInfo.label||'').replace('\n',' ')}</h1>
+    ${loggedInHeader()}
+  </div>
+  <div class="screen screen-enter">
+    <div class="progress-wrap">
+      <div class="progress-meta"><span>Step ${S.currentStep+1} of ${steps.length}</span><span>${prog}%</span></div>
+      <div class="progress-track"><div class="progress-fill" style="width:${prog}%"></div></div>
+    </div>
+    <div class="card">
+      <div class="step-hdr"><div class="step-title">${step.title}</div>${step.sub?`<div class="step-sub">${step.sub}</div>`:''}</div>
+      ${step.render(S.currentDoor)}
+      ${S.stepError?banner('danger','\u26A0\uFE0F '+S.stepError):''}
+    </div>
+    ${isBasic?banner('warn','\u26A0\uFE0F This door type requires desktop quote review. Notes will be captured for GM review.'):''}
+    <button class="btn btn-primary" data-action="next">${S.currentStep===steps.length-1?'Generate Summary \u2192':'Next Step \u2192'}</button>
+  </div>`;
+  return h;
+}
+
+function renderSummary() {
+  const {completedDoors, job} = S;
+  const fullOut = genFullOutput();
+  let allNotes = '';
+  completedDoors.forEach((d,i) => {
+    if (completedDoors.length>1) allNotes += `--- DOOR ${i+1}: ${getDTLabel(d.typeId)} ---\n\n`;
+    allNotes += genNotesText(d.data, d.typeId) + '\n\n';
+  });
+
+  let h = `<div class="app-header">
+    <button class="btn-back" data-action="back-home">\u2190 Home</button>
+    <h1>Quote Summary</h1>
+    <span class="header-badge">${fmtDate()}</span>
+    ${loggedInHeader()}
+  </div>
+  <div class="screen screen-enter">`;
+
+  // Job header
+  h += `<div class="job-hdr-card"><div class="job-hdr-title">\uD83D\uDCCB ${esc(job.customerName)||'Quote'}</div>
+    <div class="job-hdr-row"><span class="jl">Job #</span><span class="jv">${esc(job.jobNumber)||'TBC'}</span></div>
+    <div class="job-hdr-row"><span class="jl">Address</span><span class="jv">${esc(job.address)||'Not provided'}</span></div>
+    <div class="job-hdr-row"><span class="jl">Date</span><span class="jv">${fmtDate()}</span></div>
+    <div class="job-hdr-row"><span class="jl">Doors</span><span class="jv">${completedDoors.length}</span></div>
+  </div>`;
+
+  // All flags
+  const allFlags = [];
+  completedDoors.forEach(d => getAllFlags(d.data, getWizKey(d.typeId)).forEach(f=>allFlags.push(f)));
+  if (allFlags.length>0) {
+    h += `<div class="card"><h3>\u26A0\uFE0F Flags & Stop Conditions</h3>`;
+    allFlags.forEach(f => h += banner(f.t==='danger'?'danger':f.t==='success'?'success':'warn', f.m));
+    h += `</div>`;
+  }
+
+  // Per door
+  completedDoors.forEach((door,i) => {
+    const dt = getDTInfo(door.typeId);
+    const sizing = genSizingLines(door.data, door.typeId);
+    const items = genSimproItems(door.data, door.typeId);
+    const photoCount = Object.keys(door.data.photosTaken||{}).length;
+    h += `<div class="card"><h3>${dt.emoji||'\uD83D\uDEAA'} Door ${i+1}: ${getDTLabel(door.typeId)}</h3>
+      <div class="muted sm mb8">${door.data.location||'Location TBC'}</div>`;
+    if (sizing) h += `<div class="calc-box mb12" style="font-family:monospace;font-size:12.5px;white-space:pre-line">${esc(sizing)}</div>`;
+    if (photoCount>0) h += `<div class="banner b-info mb8">\uD83D\uDCF7 ${photoCount} photo(s) captured on site</div>`;
+    h += `<div class="fw6 sm c-navy mb8">Simpro Items to Add:</div>`;
+    items.forEach(it => h += `<div style="font-size:13px;padding:5px 0;border-bottom:1px solid var(--border)">${esc(it)}</div>`);
+    h += `</div>`;
+  });
+
+  // Notes output
+  h += `<div class="card"><h3>\uD83D\uDCDD Simpro Notes (Copy & Paste)</h3>
+    <div class="out-box" id="notesBox">${esc(allNotes)}</div>
+    <div class="btn-grid2 mt12">
+      <button class="btn btn-orange btn-sm" data-action="copy-notes">\uD83D\uDCCB Copy Notes</button>
+      <button class="btn btn-primary btn-sm" data-action="copy-full">\uD83D\uDCC4 Copy Full</button>
+    </div>
+    <div class="copy-feedback" id="cpFb"></div>
+  </div>`;
+
+  h += `<div class="card"><h3>What next?</h3>
+    <button class="btn btn-orange mb8" data-action="add-another">\u2795 Add Another Door to This Job</button>
+    <button class="btn btn-outline" data-action="new-job">\uD83D\uDDD1\uFE0F Start New Job</button>
+  </div>`;
+
+  // Hidden textareas for clipboard
+  h += `<textarea id="_notesOut" style="position:fixed;left:-9999px">${esc(allNotes)}</textarea>
+        <textarea id="_fullOut" style="position:fixed;left:-9999px">${esc(fullOut)}</textarea>`;
+  h += `</div>`;
+  return h;
+}
+
+// ====================== EVENT LISTENERS ======================
+function attachListeners() {
+  const app = document.getElementById('app');
+
+  // Login form
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', e => {
+      e.preventDefault();
+      login(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
+    });
+  }
+
+  // Job fields
+  app.querySelectorAll('[data-job]').forEach(el => {
+    el.addEventListener('input', e => { S.job[e.target.dataset.job] = e.target.value; saveSt(); });
+  });
+
+  // Door type buttons
+  app.querySelectorAll('[data-doortype]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      S.currentTypeId = btn.dataset.doortype;
+      S.currentStep = 0;
+      S.currentDoor = {};
+      S.stepError = null;
+      S.screen = 'wizard';
+      render();
+    });
+  });
+
+  // Option buttons
+  app.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const field = btn.dataset.field;
+      const val = btn.dataset.val;
+      if (field && field.startsWith('extraHw_')) {
+        const parts = field.split('_');
+        const idx = parseInt(parts[1]);
+        const key = parts[2];
+        if (!S.currentDoor.extraHardware) S.currentDoor.extraHardware = [];
+        if (!S.currentDoor.extraHardware[idx]) S.currentDoor.extraHardware[idx] = {supplier:'',model:'',qty:'1'};
+        S.currentDoor.extraHardware[idx][key] = val;
+      } else {
+        S.currentDoor[field] = val;
+      }
+      S.stepError = null;
+      rerenderStep();
+    });
+  });
+
+  // Yes/No buttons
+  app.querySelectorAll('.yn-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      S.currentDoor[btn.dataset.field] = btn.dataset.val;
+      S.stepError = null;
+      rerenderStep();
+    });
+  });
+
+  // Text/number inputs in wizard
+  app.querySelectorAll('[data-field]').forEach(el => {
+    if (el.tagName==='INPUT'||el.tagName==='TEXTAREA') {
+      el.addEventListener('input', e => {
+        const field = e.target.dataset.field;
+        if (field && field.startsWith('extraHw_')) {
+          const parts = field.split('_');
+          const idx = parseInt(parts[1]);
+          const key = parts[2];
+          if (!S.currentDoor.extraHardware) S.currentDoor.extraHardware = [];
+          if (!S.currentDoor.extraHardware[idx]) S.currentDoor.extraHardware[idx] = {supplier:'',model:'',qty:'1'};
+          S.currentDoor.extraHardware[idx][key] = e.target.value;
+        } else {
+          S.currentDoor[field] = e.target.value;
+        }
+        saveSt();
+        if (e.target.type==='number') {
+          scheduleRerender(field, e.target.selectionStart);
+        }
+      });
+    }
+  });
+
+  // Photo inputs
+  app.querySelectorAll('.photo-input').forEach(input => {
+    input.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const slotId = e.target.dataset.slot;
+      if (PHOTOS[slotId]) URL.revokeObjectURL(PHOTOS[slotId].url);
+      PHOTOS[slotId] = { url: URL.createObjectURL(file), name: file.name };
+      if (!S.currentDoor.photosTaken) S.currentDoor.photosTaken = {};
+      S.currentDoor.photosTaken[slotId] = file.name;
+      saveSt();
+      rerenderStep();
+    });
+  });
+
+  // Size picker now uses plain text inputs - no button handler needed
+
+  // Requirements checkboxes
+  app.querySelectorAll('.rc').forEach(cb => {
+    cb.addEventListener('change', e => {
+      const r = e.target.dataset.req;
+      if (!S.currentDoor.reqsChecked) S.currentDoor.reqsChecked = [];
+      if (e.target.checked) { if (!S.currentDoor.reqsChecked.includes(r)) S.currentDoor.reqsChecked.push(r); }
+      else S.currentDoor.reqsChecked = S.currentDoor.reqsChecked.filter(x=>x!==r);
+      saveSt();
+    });
+  });
+
+  // Actions
+  app.querySelectorAll('[data-action]').forEach(el => {
+    el.addEventListener('click', () => handleAction(el.dataset.action));
+  });
+}
+
+function rerenderStep() {
+  const wk = getWizKey(S.currentTypeId);
+  const steps = WIZARDS[wk]||[];
+  const step = steps[S.currentStep];
+  if (!step) return;
+  const card = document.querySelector('.card');
+  if (!card) return;
+  const hdrEl = card.querySelector('.step-hdr');
+  const hdrHtml = hdrEl ? hdrEl.outerHTML : '';
+  card.innerHTML = hdrHtml + step.render(S.currentDoor) + (S.stepError?banner('danger','\u26A0\uFE0F '+S.stepError):'');
+  attachListeners();
+  saveSt();
+  setTimeout(catInitDropdowns, 30);
+}
+
+function handleAction(action) {
+  if (action==='logout') {
+    logout();
+  } else if (action==='back') {
+    if (S.currentStep>0) { S.currentStep--; S.stepError=null; render(); }
+    else { S.screen='home'; S.currentDoor={}; S.stepError=null; render(); }
+  } else if (action==='next') {
+    const wk = getWizKey(S.currentTypeId);
+    const steps = WIZARDS[wk]||[];
+    const step = steps[S.currentStep];
+    const err = step.validate(S.currentDoor);
+    if (err) { S.stepError=err; rerenderStep(); return; }
+    S.stepError = null;
+    if (S.currentStep===steps.length-1) {
+      S.completedDoors.push({typeId:S.currentTypeId, data:{...S.currentDoor}});
+      S.screen='summary'; S.currentDoor={}; render();
+    } else { S.currentStep++; render(); }
+  } else if (action==='back-home') {
+    S.screen='home'; render();
+  } else if (action==='view-summary') {
+    S.screen='summary'; render();
+  } else if (action==='add-another') {
+    S.screen='home'; S.currentDoor={}; S.currentStep=0; S.currentTypeId=null; render();
+  } else if (action==='new-job') {
+    if (confirm('Start a new job? This will clear all current data.')) {
+      clearSt(); S=defaultState(); render();
+    }
+  } else if (action==='add-hw') {
+    if (!S.currentDoor.extraHardware) S.currentDoor.extraHardware = [];
+    S.currentDoor.extraHardware.push({supplier:'',model:'',qty:'1'});
+    saveSt();
+    rerenderStep();
+  } else if (action.startsWith('remove-hw-')) {
+    const idx = parseInt(action.replace('remove-hw-',''));
+    if (S.currentDoor.extraHardware) {
+      S.currentDoor.extraHardware.splice(idx, 1);
+      saveSt();
+      rerenderStep();
+    }
+  } else if (action==='copy-notes') {
+    const t = document.getElementById('_notesOut')?.value||'';
+    doCopy(t, 'Notes copied to clipboard!');
+  } else if (action==='copy-full') {
+    const t = document.getElementById('_fullOut')?.value||'';
+    doCopy(t, 'Full summary copied to clipboard!');
+  }
+}
+
+function doCopy(text, msg) {
+  const fb = document.getElementById('cpFb');
+  const set = (m,ok) => { if(fb){fb.textContent=m; fb.style.color=ok?'var(--success)':'var(--danger)'; setTimeout(()=>{fb.textContent='';},3000);} };
+  if (navigator.clipboard&&navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(()=>set('\u2705 '+msg,true)).catch(()=>fallbackCopy(text,msg,set));
+  } else fallbackCopy(text,msg,set);
+}
+
+function fallbackCopy(text,msg,set) {
+  try {
+    const ta=document.createElement('textarea'); ta.value=text; ta.style.cssText='position:fixed;left:-9999px;top:-9999px'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); set('\u2705 '+msg,true);
+  } catch(e) { set('\u274C Copy failed \u2014 select text manually',false); }
+}
+
+// ====================== INIT ======================
+render();
+
+// ====================== IMPROVEMENTS MODAL ======================
+(function() {
+  // Floating button
+  const btn = document.createElement('button');
+  btn.id = 'improveBtn';
+  btn.textContent = '💡 Suggest Improvement';
+  document.body.appendChild(btn);
+
+  // Overlay + modal
+  const overlay = document.createElement('div');
+  overlay.id = 'improveOverlay';
+  overlay.innerHTML = `
+    <div id="improveModal">
+      <h3>💡 Suggest an Improvement</h3>
+      <p class="sub">What would make this wizard easier to use? Your suggestion goes straight to the quoting agent for review.</p>
+      <textarea id="improveFeedback" placeholder="e.g. Add a field for wall thickness on every door type, or make the hardware step show a photo of the product..."></textarea>
+      <div class="btn-grid2 mt12">
+        <button class="btn btn-outline btn-sm" id="improveClose">Cancel</button>
+        <button class="btn btn-orange btn-sm" id="improveSend">🚀 Send to AI Agent</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  updateLoginOnlyElements();
+
+  btn.addEventListener('click', () => {
+    overlay.style.display = 'flex';
+    setTimeout(() => document.getElementById('improveFeedback').focus(), 100);
+  });
+  document.getElementById('improveClose').addEventListener('click', () => {
+    overlay.style.display = 'none';
+  });
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.style.display = 'none';
+  });
+  const WIZARD_WEBHOOK = 'https://webhooks.tasklet.ai/v1/public/webhook/a_75vg2rre3ydf7p02dct4?token=2a1bd1190c8efebb720a7f5f61652940';
+  document.getElementById('improveSend').addEventListener('click', () => {
+    const fb = (document.getElementById('improveFeedback').value || '').trim();
+    if (!fb) { alert('Please enter your suggestion before sending.'); return; }
+    const sendBtn = document.getElementById('improveSend');
+    sendBtn.disabled = true;
+    sendBtn.textContent = '⏳ Sending...';
+    const dateStr = new Date().toLocaleDateString('en-AU');
+    const currentScreen = S.screen || 'unknown';
+    const currentStep = S.currentStep >= 0 ? S.currentStep : null;
+    const payload = {
+      type: 'improvement_suggestion',
+      suggestion: fb,
+      date: dateStr,
+      source: '2nd Fix Quote Wizard v3',
+      context: { screen: currentScreen, step: currentStep }
+    };
+    fetch(WIZARD_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(r => {
+      if (r.ok) {
+        overlay.style.display = 'none';
+        document.getElementById('improveFeedback').value = '';
+        alert('✅ Suggestion received! The AI quoting agent will review and roll out an update.');
+      } else {
+        alert('⚠️ Could not send — please try again in a moment.');
+      }
+    }).catch(e => {
+      console.log('Webhook failed:', e);
+      alert('⚠️ Could not send — check your internet connection and try again.');
+    }).finally(() => {
+      sendBtn.disabled = false;
+      sendBtn.textContent = '📧 Send Suggestion';
+    });
+  });
+})();
+
+// --- Signature pad logic ---
+function initSigPad(context) {
+  const canvas = document.getElementById('sigCanvas_' + context);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const sigKey = 'trimWarrantySig_' + context;
+
+  // Set canvas pixel size to match display size
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width || 300;
+  canvas.height = 160;
+
+  // If existing sig data, restore it
+  const existing = S.currentDoor[sigKey];
+  if (existing) {
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0);
+    img.src = existing;
+    canvas.classList.add('signed');
+  }
+
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  let drawing = false;
+  let lastX = 0, lastY = 0;
+
+  function getPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return [src.clientX - r.left, src.clientY - r.top];
+  }
+
+  function start(e) { e.preventDefault(); drawing = true; [lastX, lastY] = getPos(e); }
+  function move(e) {
+    e.preventDefault();
+    if (!drawing) return;
+    const [x, y] = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    [lastX, lastY] = [x, y];
+    // Save on each stroke
+    S.currentDoor[sigKey] = canvas.toDataURL();
+    canvas.classList.add('signed');
+    const st = document.getElementById('sigStatus_' + context);
+    if (st) st.textContent = '✅ Signature captured';
+  }
+  function end(e) { drawing = false; }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  canvas.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', end);
+}
+
+function clearSig(context) {
+  const canvas = document.getElementById('sigCanvas_' + context);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const sigKey = 'trimWarrantySig_' + context;
+  delete S.currentDoor[sigKey];
+  canvas.classList.remove('signed');
+  const st = document.getElementById('sigStatus_' + context);
+  if (st) st.textContent = 'Ask customer to sign above with their finger';
+}
+
+// Hook into rerenderStep to init sig pads after render
+const _origRender = rerenderStep;
+rerenderStep = function() {
+  _origRender();
+  // Init any sig pads present in the DOM
+  document.querySelectorAll('[id^="sigCanvas_"]').forEach(el => {
+    const ctx = el.id.replace('sigCanvas_', '');
+    initSigPad(ctx);
+  });
+};
+
+</script>
+</body>
+</html>
