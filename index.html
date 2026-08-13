@@ -297,7 +297,7 @@ const PHOTOS = {};
 function defaultState() {
   return {
     screen: 'home',
-    job: { customerName:'', jobNumber:'', address:'', podiumNotes:'', areas:{} },
+    job: { customerName:'', mobile:'', email:'', jobNumber:'', address:'', podiumNotes:'', areas:{} },
     currentTypeId: null,
     currentStep: 0,
     currentDoor: {},
@@ -316,7 +316,8 @@ const STAFF_ACCOUNTS = [
   { name: 'Cherie Lanzon', firstName: 'Cherie', email: 'sales@2ndfix.com.au', password: '2ndFix2025!', isAdmin: false },
   { name: 'Andrew Lewis', firstName: 'Andrew', email: 'accounts@2ndfix.com.au', password: '2ndFix2025!', isAdmin: false },
   { name: 'Princess Lei', firstName: 'Princess', email: 'admin@2ndfix.com.au', password: '2ndFix2025!', isAdmin: false },
-  { name: 'George Kalliontzis', firstName: 'George', email: 'george@2ndfix.com.au', password: '2ndFixBoss!', isAdmin: true }
+  { name: 'George Kalliontzis', firstName: 'George', email: 'george@2ndfix.com.au', password: '2ndFixBoss!', isAdmin: true },
+  { name: 'Kel Smith', firstName: 'Kel', email: 'info@kpro.net.au', password: '2ndFix2025!', isAdmin: false }
 ];
 
 function loadLoggedInUser() {
@@ -1567,6 +1568,8 @@ function renderHome() {
 
   h += `<div class="card"><h2>Job Details</h2>
     <div class="form-group"><label>Customer Name</label><input type="text" data-job="customerName" value="${ea(job.customerName)}" placeholder="Customer name..."></div>
+    <div class="form-group"><label>Mobile</label><input type="text" data-job="mobile" value="${ea(job.mobile)}" placeholder="04..." inputmode="tel"></div>
+    <div class="form-group"><label>Email</label><input type="email" data-job="email" value="${ea(job.email)}" placeholder="customer@email.com" inputmode="email"></div>
     <div class="form-group"><label>Simpro Job #</label><input type="text" data-job="jobNumber" value="${ea(job.jobNumber)}" placeholder="Job number..."></div>
     <div class="form-group"><label>Address</label><input type="text" data-job="address" value="${ea(job.address)}" placeholder="Site address..."></div>
     <div class="form-group"><label>Podium Notes / Briefing</label><textarea data-job="podiumNotes" placeholder="Paste any notes from Podium or Simpro...">${esc(job.podiumNotes)}</textarea></div>
@@ -1674,6 +1677,11 @@ function renderHelp() {
     <h3>Multiple doors</h3><p>After finishing a door, use <strong>+ Add Another Door</strong> on the summary screen. Each door stays grouped under the same job.</p>
     <h3>Copying to Simpro</h3><p><strong>Copy Notes</strong> copies the customer/job notes for the Simpro notes field. <strong>Copy Full</strong> copies the complete output, including sizing, flags and items.</p>
     <h3>Starting fresh</h3><p><strong>Start New Job</strong> clears the current job and all captured doors. Check you have copied what you need first.</p>`, true);
+  h += accordion('help-simpro-draft','🏗️','Creating a draft quote in Simpro', `
+    <h3>What the button does</h3><p>On the summary screen, <strong>🏗️ Create Draft Quote in Simpro</strong> builds a draft quote in Simpro with the customer, site, one section per door and the right cost centres — ready for you to price.</p>
+    <h3>Step by step</h3><ol><li>Fill in <strong>Job Details</strong>: customer name, <strong>mobile</strong>, <strong>email</strong> and site address. Mobile and email let Simpro match an existing customer instead of creating a duplicate.</li><li>Complete every door in the wizard.</li><li>On the summary screen tap <strong>🏗️ Create Draft Quote in Simpro</strong> and confirm the details.</li><li>It lands in Simpro as a <strong>draft</strong> (Stage: In Progress) attributed to whoever is logged in.</li><li>Open the quote from the green link, then <strong>add pricing</strong> to each cost centre.</li><li>Review with the GM, then send it to the customer from Simpro.</li></ol>
+    <h3>Good to know</h3><ul><li>The full wizard output is attached to the quote as a note, so nothing captured on site is lost.</li><li>Cost centres are created empty — no prices are ever guessed by the app.</li><li>If the customer or site already exists in Simpro it is reused, not duplicated.</li></ul>
+    <div class="help-rule"><strong>The customer is never emailed automatically.</strong> Nothing leaves Simpro until you send it yourself.</div>`);
   h += accordion('help-first-questions','🗣️','First Questions & Door Types', `
     <h3>Ask every customer</h3><ol><li>Is this for <strong>inside or outside</strong> the house?</li><li>Are they <strong>replacing an existing door</strong> or creating a new opening?</li><li>What <strong>style</strong> of door are they after?</li></ol>
     <h3>9 door types</h3><table class="help-quick-table"><thead><tr><th>Type</th><th>Typical use</th></tr></thead><tbody>
@@ -1761,6 +1769,11 @@ function renderSummary() {
   // Notes output
   h += `<div class="card"><h3>\uD83D\uDCDD Simpro Notes (Copy & Paste)</h3>
     <div class="out-box" id="notesBox">${esc(allNotes)}</div>
+    <div id="simproQuoteArea" class="mt12">
+      <button class="btn btn-primary" id="simproBtn" data-action="create-simpro-quote">\uD83C\uDFD7\uFE0F Create Draft Quote in Simpro</button>
+      <p class="sm muted tc mt8" id="simproHint">Creates a draft in Simpro for you to price and review. The customer is not sent anything.</p>
+      <div id="simproMsg"></div>
+    </div>
     <div class="btn-grid2 mt12">
       <button class="btn btn-orange btn-sm" data-action="copy-notes">\uD83D\uDCCB Copy Notes</button>
       <button class="btn btn-primary btn-sm" data-action="copy-full">\uD83D\uDCC4 Copy Full</button>
@@ -1778,6 +1791,166 @@ function renderSummary() {
         <textarea id="_fullOut" style="position:fixed;left:-9999px">${esc(fullOut)}</textarea>`;
   h += `</div>`;
   return h;
+}
+
+// ====================== SIMPRO DRAFT QUOTE ======================
+const CREATE_QUOTE_API = '/.netlify/functions/create-quote';
+let _simproInFlight = false;
+
+// Last word = family name. Single word = family name only.
+function splitCustomerName(name) {
+  const parts = String(name||'').trim().split(/\s+/).filter(Boolean);
+  if (parts.length===0) return { givenName:'', familyName:'' };
+  if (parts.length===1) return { givenName:'', familyName:parts[0] };
+  return { givenName: parts.slice(0,-1).join(' '), familyName: parts[parts.length-1] };
+}
+
+// Best-effort split of the single address field into Simpro address parts
+function parseAddress(raw) {
+  let address = String(raw||'').trim();
+  let city = '', state = 'SA', postalCode = '';
+  const pc = address.match(/(\d{4})\s*$/);
+  if (pc) { postalCode = pc[1]; address = address.slice(0, pc.index).replace(/[,\s]+$/,'').trim(); }
+  const st = address.match(/[,\s]+(SA|NSW|VIC|QLD|WA|NT|TAS|ACT)\s*$/i);
+  if (st) { state = st[1].toUpperCase(); address = address.slice(0, st.index).replace(/[,\s]+$/,'').trim(); }
+  const parts = address.split(',').map(p=>p.trim()).filter(Boolean);
+  if (parts.length>1) { city = parts.pop(); address = parts.join(', '); }
+  return { address, city, state, postalCode };
+}
+
+// 21 Door S&I always; 24 Hardware S&I if new/extra hardware; 28 Screen Door if a screen is involved
+function doorCostCentres(d) {
+  const cc = [21];
+  const extras = (d.extraHardware||[]).filter(it => it && (it.supplier||it.model));
+  if (d.hwOption==='New hardware required' || extras.length>0) cc.push(24);
+  if (d.hasScreen==='Yes') cc.push(28);
+  return cc;
+}
+
+function buildSimproDoors() {
+  return S.completedDoors.map((door,i) => {
+    const label = getDTLabel(door.typeId);
+    const sizing = genSizingLines(door.data, door.typeId);
+    const flags = getAllFlags(door.data, getWizKey(door.typeId));
+    const items = genSimproItems(door.data, door.typeId);
+    let desc = '';
+    if (sizing) desc += sizing + '\n';
+    if (flags.length>0) desc += `\nFLAGS:\n${flags.map(f=>f.m).join('\n')}\n`;
+    desc += `\nITEMS TO ADD:\n${items.join('\n')}`;
+    return {
+      sectionName: `Door ${i+1}: ${label} \u2014 ${door.data.location||'Location TBC'}`,
+      description: desc.trim(),
+      costCentres: doorCostCentres(door.data)
+    };
+  });
+}
+
+function simproMsg(html) {
+  const el = document.getElementById('simproMsg');
+  if (el) el.innerHTML = html;
+}
+
+function simproLogHtml(log) {
+  if (!Array.isArray(log)||log.length===0) return '';
+  return `<div class="sm mt8" style="font-family:monospace;font-size:11.5px;line-height:1.6">${log.map(l=>esc(l)).join('<br>')}</div>`;
+}
+
+async function createSimproQuote() {
+  if (_simproInFlight) return;
+  const btn = document.getElementById('simproBtn');
+  if (!btn) return;
+  const {job, completedDoors} = S;
+  const customerName = (job.customerName||'').trim();
+  const addressRaw = (job.address||'').trim();
+
+  if (!customerName || !addressRaw) {
+    simproMsg(banner('danger','\u26A0\uFE0F Add the customer name and site address in Job Details before creating a Simpro quote.'));
+    return;
+  }
+  if (completedDoors.length===0) {
+    simproMsg(banner('danger','\u26A0\uFE0F Capture at least one door before creating a Simpro quote.'));
+    return;
+  }
+  if (location.hostname.includes('github.io')) {
+    simproMsg(banner('warn','\u26A0\uFE0F Simpro quoting only works on the Netlify app. Open 2ndfix-quote-wizard.netlify.app'));
+    return;
+  }
+
+  const nm = splitCustomerName(customerName);
+  const addr = parseAddress(addressRaw);
+  const doors = buildSimproDoors();
+  const salespersonName = (loggedInUser && loggedInUser.name) || 'George Kalliontzis';
+
+  if (!confirm(`Create a DRAFT quote in Simpro?\n\nCustomer: ${customerName}\nAddress: ${addressRaw}\nDoors: ${doors.length}\nSalesperson: ${salespersonName}\n\nNothing is sent to the customer.`)) return;
+
+  _simproInFlight = true;
+  const originalLabel = btn.innerHTML;
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  btn.innerHTML = '\u23F3 Creating draft quote in Simpro\u2026';
+  simproMsg('');
+
+  const payload = {
+    customer: {
+      givenName: nm.givenName, familyName: nm.familyName,
+      mobile: (job.mobile||'').trim(), email: (job.email||'').trim(),
+      address: addr.address, city: addr.city, state: addr.state, postalCode: addr.postalCode
+    },
+    salespersonName,
+    jobNumber: job.jobNumber||'',
+    fullOutput: genFullOutput(),
+    doors
+  };
+
+  let data = null, netErr = null;
+  try {
+    const res = await fetch(CREATE_QUOTE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.status===404) netErr = 'functions-missing';
+    else data = await res.json().catch(()=>null);
+    if (!netErr && !data) netErr = 'bad-response';
+  } catch(e) {
+    netErr = 'network';
+  }
+
+  _simproInFlight = false;
+  btn.disabled = false;
+  btn.style.opacity = '';
+  btn.innerHTML = originalLabel;
+
+  if (netErr==='functions-missing') {
+    simproMsg(banner('warn','\u26A0\uFE0F Simpro quoting only works on the Netlify app. Open 2ndfix-quote-wizard.netlify.app'));
+    return;
+  }
+  if (netErr) {
+    simproMsg(banner('danger','\u274C Could not reach Simpro. Check your internet connection and try again.'));
+    return;
+  }
+
+  if (data.success && data.quoteId) {
+    const created = data.created || {};
+    const custTxt = created.customer ? 'New customer created' : 'Existing customer used';
+    const siteTxt = created.site ? 'new site created' : 'existing site used';
+    btn.style.display = 'none';
+    const hint = document.getElementById('simproHint');
+    if (hint) hint.style.display = 'none';
+    simproMsg(`<div class="banner b-success" style="text-align:left">
+      <div class="fw7 mb8">\u2705 Draft Quote #${esc(String(data.quoteId))} created in Simpro</div>
+      <div class="sm mb8">${esc(custTxt)} \u2014 ${esc(siteTxt)}.</div>
+      <a class="btn btn-success btn-sm" href="${ea(data.quoteUrl||'')}" target="_blank" rel="noopener">\uD83D\uDD17 Open Quote in Simpro</a>
+      <div class="sm mt8">Next: add pricing to each cost centre, then review before sending.</div>
+    </div>`);
+  } else {
+    simproMsg(`<div class="banner b-danger" style="text-align:left">
+      <div class="fw7 mb8">\u274C Draft quote not created</div>
+      <div class="sm">${esc(data.error||'Unknown error from Simpro.')}</div>
+      ${simproLogHtml(data.log)}
+      <div class="sm mt8">Fix the issue above and tap the button again.</div>
+    </div>`);
+  }
 }
 
 // ====================== EVENT LISTENERS ======================
@@ -1994,6 +2167,8 @@ function handleAction(action) {
       saveSt();
       rerenderStep();
     }
+  } else if (action==='create-simpro-quote') {
+    createSimproQuote();
   } else if (action==='copy-notes') {
     const t = document.getElementById('_notesOut')?.value||'';
     doCopy(t, 'Notes copied to clipboard!');
