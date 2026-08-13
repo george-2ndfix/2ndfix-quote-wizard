@@ -288,6 +288,8 @@ const DOOR_TYPES = [
   { id:'bifold',         emoji:'\u3030\uFE0F',   label:'Bifold / Multifold',          wiz:'bifold'       },
 ];
 
+const JOB_AREAS = ['Front Entry','Rear / Back Door','Garage Internal','Laundry','Bathroom','Ensuite','Toilet / WC','Bedroom 1','Bedroom 2','Bedroom 3','Bedroom 4','Living / Lounge','Kitchen','Pantry','Study / Office','Hallway','Linen Cupboard','Robe / Wardrobe','Other'];
+
 // ====================== SESSION PHOTO STORE ======================
 const PHOTOS = {};
 
@@ -295,7 +297,7 @@ const PHOTOS = {};
 function defaultState() {
   return {
     screen: 'home',
-    job: { customerName:'', jobNumber:'', address:'', podiumNotes:'' },
+    job: { customerName:'', jobNumber:'', address:'', podiumNotes:'', areas:{} },
     currentTypeId: null,
     currentStep: 0,
     currentDoor: {},
@@ -1242,8 +1244,12 @@ function makeBasicWizard(typeName, checklistItems, reviewNote, photoPrefix) {
     {
       id:'location', title:'Location / Room', sub:'Where is this door?',
       render(d) {
+        const scopedAreas = Object.keys((S.job&&S.job.areas)||{}).filter(a => (S.job.areas[a]||0) >= 1);
+        const datalist = scopedAreas.length>0
+          ? `<datalist id="jobAreaOptions">${scopedAreas.map(a=>`<option value="${ea(a)}">`).join('')}</datalist>`
+          : '';
         return `<div class="form-group"><label>Location description</label>
-          <input type="text" data-field="location" value="${ea(d.location||'')}" placeholder="e.g. Front entry, Lounge, Bedroom..."></div>`;
+          <input type="text" data-field="location" list="${scopedAreas.length>0?'jobAreaOptions':''}" value="${ea(d.location||'')}" placeholder="e.g. Front entry, Lounge, Bedroom...">${datalist}</div>`;
       },
       validate(d) { return d.location?null:'Please enter a location'; },
       flags(d) { return []; }
@@ -1566,6 +1572,51 @@ function renderHome() {
     <div class="form-group"><label>Podium Notes / Briefing</label><textarea data-job="podiumNotes" placeholder="Paste any notes from Podium or Simpro...">${esc(job.podiumNotes)}</textarea></div>
   </div>`;
 
+  {
+    const areas = (job.areas = job.areas || {});
+    h += `<div class="card"><h2>\uD83D\uDCCB Job Scope \u2014 Doors Required</h2>
+      <p class="sm muted mb12">Tap the areas that need doors. Add a quantity if an area needs more than one.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">`;
+    JOB_AREAS.forEach(area => {
+      const qty = areas[area] || 0;
+      const active = qty >= 1;
+      const chipStyle = active
+        ? 'background:var(--orange);color:#fff;border:1px solid var(--orange);'
+        : 'background:#f9fafb;color:var(--text);border:1px solid var(--border);';
+      h += `<button type="button" data-area="${ea(area)}" style="${chipStyle}font-size:12px;padding:7px 11px;border-radius:16px;cursor:pointer;font-family:inherit;font-weight:600">${esc(area)}</button>`;
+    });
+    h += `</div>`;
+
+    const selectedAreas = Object.keys(areas).filter(a => (areas[a]||0) >= 1);
+    if (selectedAreas.length>0) {
+      h += `<div class="mt12" style="display:flex;flex-direction:column;gap:8px">`;
+      selectedAreas.forEach(area => {
+        const qty = areas[area];
+        h += `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span class="sm fw6 c-navy">${esc(area)}</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button type="button" data-areaqty="${ea(area)}" data-delta="-1" style="min-width:32px;min-height:32px;border:1px solid var(--border);border-radius:8px;background:white;color:var(--text);font-size:16px;padding:0;cursor:pointer;font-family:inherit">\u2212</button>
+            <span style="min-width:20px;text-align:center;font-weight:700">${qty}</span>
+            <button type="button" data-areaqty="${ea(area)}" data-delta="1" style="min-width:32px;min-height:32px;border:1px solid var(--border);border-radius:8px;background:white;color:var(--text);font-size:16px;padding:0;cursor:pointer;font-family:inherit">+</button>
+          </div>
+        </div>`;
+      });
+      h += `</div>`;
+    }
+
+    const totalDoorsReq = Object.values(areas).reduce((a,b)=>a+(b||0),0);
+    h += `<div class="mt12 sm fw6 c-navy">Total doors required: <strong>${totalDoorsReq}</strong></div>`;
+    if (totalDoorsReq>0) {
+      const capturedPct = Math.min(100, Math.round((completedDoors.length/totalDoorsReq)*100));
+      h += `<div class="mt8 sm muted">${completedDoors.length} of ${totalDoorsReq} doors captured</div>
+        <div class="progress-track" style="margin-top:4px"><div class="progress-fill" style="width:${capturedPct}%"></div></div>`;
+      if (completedDoors.length>=totalDoorsReq) {
+        h += `<div class="mt8 sm" style="color:var(--success);font-weight:700">\u2705 All doors captured \u2014 ready to review the summary.</div>`;
+      }
+    }
+    h += `</div>`;
+  }
+
   h += `<div class="card"><h2>Select Door Type</h2><p class="sm muted mb12">Tap a door type to begin the quote wizard</p>
     <div class="door-grid">`;
   DOOR_TYPES.forEach(dt => {
@@ -1668,6 +1719,21 @@ function renderSummary() {
     <div class="job-hdr-row"><span class="jl">Doors</span><span class="jv">${completedDoors.length}</span></div>
   </div>`;
 
+  // Job scope summary
+  {
+    const areas = job.areas || {};
+    const areaEntries = Object.keys(areas).filter(a => (areas[a]||0) >= 1);
+    if (areaEntries.length>0) {
+      const totalDoorsReq = areaEntries.reduce((sum,a)=>sum+(areas[a]||0),0);
+      h += `<div class="card"><h3>\uD83D\uDCCB Job Scope</h3>
+        <div class="sm muted mb8">${completedDoors.length} of ${totalDoorsReq} doors captured</div>`;
+      areaEntries.forEach(area => {
+        h += `<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)"><span>${esc(area)}</span><span class="fw6">${areas[area]}</span></div>`;
+      });
+      h += `</div>`;
+    }
+  }
+
   // All flags
   const allFlags = [];
   completedDoors.forEach(d => getAllFlags(d.data, getWizKey(d.typeId)).forEach(f=>allFlags.push(f)));
@@ -1750,6 +1816,32 @@ function attachListeners() {
       S.currentDoor = {};
       S.stepError = null;
       S.screen = 'wizard';
+      render();
+    });
+  });
+
+  // Job scope area chips
+  app.querySelectorAll('[data-area]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!S.job.areas) S.job.areas = {};
+      const area = btn.dataset.area;
+      if (S.job.areas[area]) { delete S.job.areas[area]; }
+      else { S.job.areas[area] = 1; }
+      saveSt();
+      render();
+    });
+  });
+
+  // Job scope area quantity steppers
+  app.querySelectorAll('[data-areaqty]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!S.job.areas) S.job.areas = {};
+      const area = btn.dataset.areaqty;
+      const delta = parseInt(btn.dataset.delta, 10) || 0;
+      const next = (S.job.areas[area] || 0) + delta;
+      if (next < 1) { delete S.job.areas[area]; }
+      else { S.job.areas[area] = next; }
+      saveSt();
       render();
     });
   });
@@ -1962,41 +2054,51 @@ render();
   overlay.addEventListener('click', e => {
     if (e.target === overlay) overlay.style.display = 'none';
   });
-  const WIZARD_WEBHOOK = 'https://webhooks.tasklet.ai/v1/public/webhook/a_75vg2rre3ydf7p02dct4?token=2a1bd1190c8efebb720a7f5f61652940';
+  const SUGGEST_ENDPOINT = 'https://2ndfix-quote-wizard.netlify.app/.netlify/functions/submit-suggestion';
   document.getElementById('improveSend').addEventListener('click', () => {
     const fb = (document.getElementById('improveFeedback').value || '').trim();
     if (!fb) { alert('Please enter your suggestion before sending.'); return; }
     const sendBtn = document.getElementById('improveSend');
     sendBtn.disabled = true;
-    sendBtn.textContent = '⏳ Sending...';
+    sendBtn.textContent = '\u23F3 Sending...';
     const dateStr = new Date().toLocaleDateString('en-AU');
-    const currentScreen = S.screen || 'unknown';
-    const currentStep = S.currentStep >= 0 ? S.currentStep : null;
+    const who = (loggedInUser && loggedInUser.name) || 'Unknown user';
     const payload = {
       type: 'improvement_suggestion',
       suggestion: fb,
+      submittedBy: who,
       date: dateStr,
       source: '2nd Fix Quote Wizard v3',
-      context: { screen: currentScreen, step: currentStep }
+      context: { screen: S.screen || 'unknown', step: (S.currentStep >= 0 ? S.currentStep : null) }
     };
-    fetch(WIZARD_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(r => {
-      if (r.ok) {
+    try {
+      const log = JSON.parse(localStorage.getItem('qwiz_suggestions') || '[]');
+      log.push(payload);
+      localStorage.setItem('qwiz_suggestions', JSON.stringify(log));
+    } catch(e) {}
+    function emailFallback() {
+      const subject = encodeURIComponent('Quote Wizard Suggestion \u2014 ' + who);
+      const body = encodeURIComponent('Suggestion:\n' + fb + '\n\n---\nFrom: ' + who + '\nDate: ' + dateStr + '\nScreen: ' + (S.screen || 'unknown') + '\nSource: 2nd Fix Quote Wizard v3');
+      window.location.href = 'mailto:george@2ndfix.com.au?subject=' + subject + '&body=' + body;
+    }
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+    Promise.race([
+      fetch(SUGGEST_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+      timeout
+    ]).then(r => {
+      if (r && r.ok) {
         overlay.style.display = 'none';
         document.getElementById('improveFeedback').value = '';
-        alert('✅ Suggestion received! The AI quoting agent will review and roll out an update.');
-      } else {
-        alert('⚠️ Could not send — please try again in a moment.');
-      }
-    }).catch(e => {
-      console.log('Webhook failed:', e);
-      alert('⚠️ Could not send — check your internet connection and try again.');
+        alert('\u2705 Suggestion sent! The AI quoting agent will review it and roll out an update.');
+      } else { throw new Error('bad status'); }
+    }).catch(() => {
+      overlay.style.display = 'none';
+      document.getElementById('improveFeedback').value = '';
+      alert('\uD83D\uDCE7 Opening your email app \u2014 just tap Send to deliver your suggestion.');
+      emailFallback();
     }).finally(() => {
       sendBtn.disabled = false;
-      sendBtn.textContent = '📧 Send Suggestion';
+      sendBtn.textContent = '\uD83D\uDCE7 Send Suggestion';
     });
   });
 })();
